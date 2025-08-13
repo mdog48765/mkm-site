@@ -8,6 +8,8 @@ const BUSINESS_PHONE_TEL = "+12178830078";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
 const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // put the file in /public
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/mkgoyllj";
+
+/* ===== Gallery images (in /public/gallery) ===== */
 const GALLERY_IMAGES = [
   "/gallery/event1.jpg",
   "/gallery/event2.jpg",
@@ -17,31 +19,64 @@ const GALLERY_IMAGES = [
   "/gallery/event6.jpg",
 ];
 
-/* ===== App ===== */
 export default function App() {
   const [logoBroken, setLogoBroken] = useState(false);
 
   // Booking/cart state
   const [bookingType, setBookingType] = useState("Pizza Records"); // "Pizza Records" | "External"
-  const [selectedService, setSelectedService] = useState("");      // package name
-  const [addOns, setAddOns] = useState([]);                        // only for External
+  const [selectedService, setSelectedService] = useState(""); // package name
+  const [addOns, setAddOns] = useState([]); // only for External
 
   // Form state
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
-  /* ===== Data ===== */
+  /* ===== Packages & Add-ons ===== */
   const pizzaPackages = useMemo(
     () => [
-      { title: "Pizza Records – Basic", price: "$250" },
-      { title: "Pizza Records – Preferred", price: "$300" },
-      { title: "Pizza Records – Preferred PLUS", price: "$350", popular: true },
-      { title: "Pizza Records – Premium", price: "$450" },
+      {
+        title: "Pizza Records – Basic",
+        price: "$250",
+        features: [
+         "Venue space and sound",
+        ],
+      },
+      {
+        title: "Pizza Records – Preferred",
+        price: "$300",
+        features: [
+        "Venue space",
+	"Sound",
+	"Lighting",
+        ],
+      },
+      {
+        title: "Pizza Records – Preferred PLUS",
+        price: "$350",
+        popular: true,
+        features: [
+          "Venue Space",
+	  "Sound",
+	  "Lighting",
+	  "Multi-track sound recording (No mastering, only files)",
+        ],
+      },
+      {
+        title: "Pizza Records – Premium",
+        price: "$450",
+        features: [
+          "Venue space",
+	  "Sound",
+	  "Lighting",
+	  "Projected Visuals",
+	  "Multi-track sound recording with Mastering",
+	  "Video recording and editing",
+        ],
+      },
     ],
     []
   );
 
-  // External tiers (from your client menu PDF)
   const externalPackages = useMemo(
     () => [
       {
@@ -60,6 +95,7 @@ export default function App() {
       {
         title: "External – Full PA",
         price: "$350/day",
+        popular: true,
         features: [
           "2× QSC K12.2 tops",
           "2× QSC KS118 subs",
@@ -69,7 +105,6 @@ export default function App() {
           "Delivery & setup included",
           "Operator included",
         ],
-        popular: true,
       },
       {
         title: "External – Festival Rig",
@@ -99,7 +134,14 @@ export default function App() {
     []
   );
 
-  /* ===== UI helpers ===== */
+  /* ===== Helpers ===== */
+  function scrollToId(id) {
+    const el = document.querySelector(id);
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
+
   function selectPackage(title) {
     setSelectedService(title);
     if (bookingType === "External") {
@@ -118,13 +160,6 @@ export default function App() {
     setAddOns([]);
   }
 
-  function scrollToId(id) {
-    const el = document.querySelector(id);
-    if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 80; // offset for sticky header
-    window.scrollTo({ top: y, behavior: "smooth" });
-  }
-
   /* ===== Submit (Formspree + conditional BCC) ===== */
   async function handleSubmit(e) {
     e.preventDefault();
@@ -134,7 +169,7 @@ export default function App() {
 
     const form = new FormData(e.currentTarget);
 
-    // Put cart info in the submission body
+    // include cart context
     form.append("Booking Type", bookingType);
     form.append("Selected Package", selectedService || "(not selected yet)");
     if (bookingType === "External") {
@@ -176,7 +211,6 @@ export default function App() {
       // fall through to mailto
     }
 
-    // Fallback to mailto (keeps BCC only for PR)
     if (!delivered) {
       const bccParam = bookingType === "Pizza Records" ? `&bcc=${encodeURIComponent(PIZZA_RECORDS_EMAIL)}` : "";
       const mailto =
@@ -290,6 +324,16 @@ export default function App() {
                       )}
                       <h3 className="text-lg font-semibold">{p.title}</h3>
                       <p className="mt-1 text-2xl font-extrabold text-red-400">{p.price}</p>
+                      {p.features?.length > 0 && (
+                        <ul className="mt-4 space-y-2 text-sm text-white/80">
+                          {p.features.map((f) => (
+                            <li key={f} className="flex items-start gap-2">
+                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       <button
                         onClick={() => selectPackage(p.title)}
                         className="mt-6 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
@@ -398,19 +442,22 @@ export default function App() {
         </div>
       </section>
 
-      {/* Gallery (images only, no placeholder text line) */}
+      {/* Gallery */}
       <section id="gallery" className="py-16 border-t border-white/10">
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-  {GALLERY_IMAGES.map((src, i) => (
-    <img
-      key={src}
-      src={src}
-      alt={`Event photo ${i + 1}`}
-      className="aspect-video object-cover rounded-xl border border-white/10"
-      loading="lazy"
-    />
-  ))}
-</div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {GALLERY_IMAGES.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt={`Event photo ${i + 1}`}
+                className="aspect-video object-cover rounded-xl border border-white/10"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Contact & Booking */}
@@ -454,11 +501,9 @@ export default function App() {
                     }}
                     className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   >
-                    {/* PR */}
                     {pizzaPackages.map((p) => (
                       <option key={p.title}>{p.title}</option>
                     ))}
-                    {/* External */}
                     {externalPackages.map((p) => (
                       <option key={p.title}>{p.title}</option>
                     ))}
@@ -492,7 +537,9 @@ export default function App() {
                 >
                   {submitting ? "Sending…" : "Send Booking Request"}
                 </button>
-                <p className="text-sm text-white/60">Direct email: <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+                <p className="text-sm text-white/60">
+                  Direct email: <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+                </p>
               </div>
 
               {sent && (
