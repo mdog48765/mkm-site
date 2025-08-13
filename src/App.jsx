@@ -2,14 +2,13 @@ import React, { useMemo, useState } from "react";
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com";
-const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com"; // BCC only for PR bookings
+const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com"; // used server-side via PR_BCC too
 const BUSINESS_PHONE_DISPLAY = "(217) 883-0078";     // MKM line (footer)
 const BUSINESS_PHONE_TEL = "+12178830078";
 const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896"; // Venue card phone
 const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
 const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // put the file in /public
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mkgoyllj";
 
 /* ===== Gallery images (in /public/gallery) ===== */
 const GALLERY_IMAGES = [
@@ -32,6 +31,7 @@ export default function App() {
   // Form state
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   /* ===== Packages & Add-ons ===== */
   const pizzaPackages = useMemo(
@@ -159,68 +159,48 @@ export default function App() {
     setAddOns([]);
   }
 
-  /* ===== Submit (Formspree + conditional BCC) ===== */
+  /* ===== Submit (Server API via Resend) ===== */
   async function handleSubmit(e) {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
     setSent(false);
+    setErrorMsg("");
 
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
 
     // include cart context
-    form.append("Booking Type", bookingType);
-    form.append("Selected Package", selectedService || "(not selected yet)");
-    if (bookingType === "External") {
-      form.append("Add-ons", addOns.length ? addOns.join(", ") : "None");
-      form.append("Travel/Labor Note", "Operator included. Travel outside local area billed at $0.50/mi round trip.");
-    }
+    const payload = {
+      name: form.get("name") || "",
+      email: form.get("email") || "",
+      phone: form.get("phone") || "",
+      service: form.get("service") || "",
+      date: form.get("date") || "",
+      message: form.get("message") || "",
+      bookingType,
+      selectedService: selectedService || "",
+      addOns: bookingType === "External" ? addOns : [],
+    };
 
-    // BCC Pizza Records only for Pizza Records bookings
-    if (bookingType === "Pizza Records") {
-      form.append("_bcc", PIZZA_RECORDS_EMAIL);
-    }
-
-    const subject = `Booking Request – ${form.get("service")} – ${form.get("date") || "TBD"}`;
-    const body =
-      `Booking Type: ${bookingType}\n` +
-      `Selected Package: ${selectedService || "(not selected yet)"}\n` +
-      (bookingType === "External"
-        ? `Add-ons: ${addOns.length ? addOns.join(", ") : "None"}\nTravel/Labor: Operator included. Travel $0.50/mi (round trip) outside local area.\n`
-        : "") +
-      `\n` +
-      `Name: ${form.get("name")}\nEmail: ${form.get("email")}\nPhone: ${form.get("phone")}\n` +
-      `Service (form field): ${form.get("service")}\nDate: ${form.get("date")}\n\n` +
-      `Message:\n${form.get("message")}\n\n--\nSent from MKM Entertainment`;
-
-    let delivered = false;
     try {
-      const res = await fetch(FORMSPREE_ENDPOINT, {
+      const res = await fetch("/api/send-email", {
         method: "POST",
-        headers: { Accept: "application/json" },
-        body: form,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        delivered = true;
-        setSent(true);
-        e.currentTarget.reset();
-        clearCart();
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `Request failed (${res.status})`);
       }
-    } catch {
-      // fall through to mailto
+      setSent(true);
+      formEl.reset();
+      clearCart();
+    } catch (err) {
+      setErrorMsg(err?.message || "Something went wrong sending your request.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!delivered) {
-      const bccParam = bookingType === "Pizza Records" ? `&bcc=${encodeURIComponent(PIZZA_RECORDS_EMAIL)}` : "";
-      const mailto =
-        `mailto:${encodeURIComponent(CONTACT_EMAIL)}` +
-        `?subject=${encodeURIComponent(subject)}` +
-        bccParam +
-        `&body=${encodeURIComponent(body)}`;
-      window.location.href = mailto;
-    }
-
-    setSubmitting(false);
   }
 
   /* ===== UI ===== */
@@ -544,6 +524,11 @@ export default function App() {
               {sent && (
                 <div className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
                   Thanks! Your request was sent. I’ll follow up at the email you provided.
+                </div>
+              )}
+              {!!errorMsg && (
+                <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
+                  Couldn’t send your request: {errorMsg}
                 </div>
               )}
             </form>
