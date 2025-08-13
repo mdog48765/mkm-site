@@ -3,8 +3,10 @@ import React, { useMemo, useState } from "react";
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com";
 const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com"; // BCC only for PR bookings
-const BUSINESS_PHONE_DISPLAY = "(217) 883-0078";
+const BUSINESS_PHONE_DISPLAY = "(217) 883-0078";     // MKM line (footer)
 const BUSINESS_PHONE_TEL = "+12178830078";
+const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896"; // Venue card phone
+const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
 const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // put the file in /public
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/mkgoyllj";
@@ -37,17 +39,14 @@ export default function App() {
       {
         title: "Pizza Records – Basic",
         price: "$250",
-        features: [
-         "Venue space and sound",
-        ],
+        features: ["Venue space and sound"],
       },
       {
         title: "Pizza Records – Preferred",
         price: "$300",
-        features: [
-        "Venue space",
-	"Sound",
-	"Lighting",
+        features: ["Venue space",
+                   "Sound",
+                   "Lighting",
         ],
       },
       {
@@ -56,9 +55,9 @@ export default function App() {
         popular: true,
         features: [
           "Venue Space",
-	  "Sound",
-	  "Lighting",
-	  "Multi-track sound recording (No mastering, only files)",
+          "Sound",
+          "Lighting",
+          "Multi-track sound recording (No mastering, only files)",
         ],
       },
       {
@@ -66,11 +65,11 @@ export default function App() {
         price: "$450",
         features: [
           "Venue space",
-	  "Sound",
-	  "Lighting",
-	  "Projected Visuals",
-	  "Multi-track sound recording with Mastering",
-	  "Video recording and editing",
+          "Sound",
+          "Lighting",
+          "Projected Visuals",
+          "Multi-track sound recording with Mastering",
+          "Video recording and editing",
         ],
       },
     ],
@@ -554,7 +553,22 @@ export default function App() {
               <h3 className="text-xl font-semibold">Rent Pizza Records</h3>
               <div className="mt-4 grid gap-3 text-sm">
                 <InfoRow label="Venue" value="Pizza Records (Jacksonville, IL)" />
-                <InfoRow label="Phone" value={<a className="hover:text-red-400" href={`tel:${BUSINESS_PHONE_TEL}`}>{BUSINESS_PHONE_DISPLAY}</a>} />
+                <InfoRow
+                  label="Phone"
+                  value={
+                    <a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>
+                      {PIZZA_RECORDS_PHONE_DISPLAY}
+                    </a>
+                  }
+                />
+                <InfoRow
+                  label="Email"
+                  value={
+                    <a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>
+                      {PIZZA_RECORDS_EMAIL}
+                    </a>
+                  }
+                />
                 <InfoRow label="Address" value={VENUE_ADDRESS} />
               </div>
 
@@ -582,6 +596,12 @@ export default function App() {
             <a href="#book" className="hover:text-red-400">Book</a>
             <a href="#gallery" className="hover:text-red-400">Gallery</a>
             <a href="#contact" className="hover:text-red-400">Contact</a>
+          </div>
+          <div className="text-white/60">
+            MKM Line:{" "}
+            <a className="hover:text-red-400" href={`tel:${BUSINESS_PHONE_TEL}`}>
+              {BUSINESS_PHONE_DISPLAY}
+            </a>
           </div>
         </div>
       </footer>
