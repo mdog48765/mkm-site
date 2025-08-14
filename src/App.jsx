@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com";
 const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com"; // used server-side via PR_BCC too
-const BUSINESS_PHONE_DISPLAY = "(217) 883-0078";     // MKM line (footer)
+const BUSINESS_PHONE_DISPLAY = "(217) 883-0078"; // MKM line (footer)
 const BUSINESS_PHONE_TEL = "+12178830078";
 const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896"; // Venue card phone
 const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
@@ -289,18 +289,32 @@ export default function App() {
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {pizzaPackages.map((p) => (
                     <div
-                      key={p.name}
+                      key={p.title}
                       className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
-                      ${selectedService === p.name ? "ring-2 ring-red-500" : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"}`}
+                      ${selectedService === p.title ? "ring-2 ring-red-500" : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"}`}
                     >
-                      <h3 className="text-lg font-semibold">{p.name}</h3>
+                      {p.popular && (
+                        <span className="self-end -mt-3 mb-2 inline-flex items-center rounded-full bg-red-600 px-2 py-1 text-xs font-semibold shadow">
+                          Most popular
+                        </span>
+                      )}
+                      <h3 className="text-lg font-semibold">{p.title}</h3>
                       <p className="mt-1 text-2xl font-extrabold text-red-400">{p.price}</p>
-                      <p className="mt-2 text-sm text-white/80">{p.description}</p>
+                      {p.features?.length > 0 && (
+                        <ul className="mt-4 space-y-2 text-sm text-white/80">
+                          {p.features.map((f) => (
+                            <li key={f} className="flex items-start gap-2">
+                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       <button
-                        onClick={() => selectPackage(p.name)}
+                        onClick={() => selectPackage(p.title)}
                         className="mt-6 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
                       >
-                        {selectedService === p.name ? "Selected" : "Select"}
+                        {selectedService === p.title ? "Selected" : "Select"}
                       </button>
                     </div>
                   ))}
@@ -347,24 +361,17 @@ export default function App() {
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {externalAddOns.map((a) => (
                         <label
-                          key={a.key || a.name}
+                          key={a.key}
                           className={`flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 cursor-pointer
-                          ${addOns.includes(a.label || a.name) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
+                          ${addOns.includes(a.key) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
                         >
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-red-600"
-                            checked={addOns.includes(a.label || a.name)}
-                            onChange={() => {
-                              const key = a.label || a.name;
-                              setAddOns((prev) =>
-                                prev.includes(key)
-                                  ? prev.filter((k) => k !== key)
-                                  : [...prev, key]
-                              );
-                            }}
+                            checked={addOns.includes(a.key)}
+                            onChange={() => toggleAddOn(a.key)}
                           />
-                          <span className="text-sm">{a.label || `${a.name} — ${a.price}`}</span>
+                          <span className="text-sm">{a.label}</span>
                         </label>
                       ))}
                     </div>
@@ -471,7 +478,7 @@ export default function App() {
                     className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   >
                     {pizzaPackages.map((p) => (
-                      <option key={p.name}>{p.name}</option>
+                      <option key={p.title}>{p.title}</option>
                     ))}
                     {externalPackages.map((p) => (
                       <option key={p.title}>{p.title}</option>
