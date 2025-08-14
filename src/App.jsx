@@ -36,16 +36,8 @@ export default function App() {
   /* ===== Packages & Add-ons ===== */
   const pizzaPackages = useMemo(
     () => [
-      {
-        title: "Pizza Records – Basic",
-        price: "$250",
-        features: ["Venue space and sound"],
-      },
-      {
-        title: "Pizza Records – Preferred",
-        price: "$300",
-        features: ["Venue space", "Sound", "Lighting"],
-      },
+      { title: "Pizza Records – Basic", price: "$250", features: ["Venue space and sound"] },
+      { title: "Pizza Records – Preferred", price: "$300", features: ["Venue space", "Sound", "Lighting"] },
       {
         title: "Pizza Records – Preferred PLUS",
         price: "$350",
@@ -134,7 +126,7 @@ export default function App() {
   function scrollToId(id) {
     const el = document.querySelector(id);
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+    const y = el.getBoundingClientRect().top + window.scrollY - 80; // account for sticky header
     window.scrollTo({ top: y, behavior: "smooth" });
   }
 
@@ -167,7 +159,6 @@ export default function App() {
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
-    // include cart context
     const payload = {
       name: form.get("name") || "",
       email: form.get("email") || "",
@@ -204,30 +195,53 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
-        <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <a href="#home" className="flex items-center gap-3">
-            {logoBroken ? (
-              <div className="h-8 w-8 rounded bg-red-600" aria-label="MKM Logo" />
-            ) : (
-              <img
-                src={LOGO_SRC}
-                alt="MKM Entertainment Logo"
-                className="h-8 w-8 object-contain"
-                onError={() => setLogoBroken(true)}
-              />
-            )}
-            <span className="font-semibold tracking-wide">MKM Entertainment LLC</span>
-          </a>
-          <nav className="hidden md:flex items-center gap-8 text-sm">
-            <a href="#book" className="hover:text-red-400">Book</a>
-            <a href="#gallery" className="hover:text-red-400">Gallery</a>
-            <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
-              Contact
-            </a>
-          </nav>
-        </div>
-      </header>
+      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
+  <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    {/* Logo */}
+    <a
+      href="#home"
+      onClick={(e) => { e.preventDefault(); scrollToId("#home"); }}
+      className="flex items-center gap-3"
+    >
+      {logoBroken ? (
+        <div className="h-8 w-8 rounded bg-red-600" aria-label="MKM Logo" />
+      ) : (
+        <img
+          src={LOGO_SRC}
+          alt="MKM Entertainment Logo"
+          className="h-8 w-8 object-contain"
+          onError={() => setLogoBroken(true)}
+        />
+      )}
+      <span className="font-semibold tracking-wide">MKM Entertainment LLC</span>
+    </a>
+
+    {/* Nav */}
+    <nav className="flex items-center gap-8 text-sm">
+      <a
+        href="#book"
+        onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
+        className="hover:text-red-400"
+      >
+        Book
+      </a>
+      <a
+        href="#gallery"
+        onClick={(e) => { e.preventDefault(); scrollToId("#gallery"); }}
+        className="hover:text-red-400"
+      >
+        Gallery
+      </a>
+      <a
+        href="#contact"
+        onClick={(e) => { e.preventDefault(); scrollToId("#contact"); }}
+        className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition"
+      >
+        Contact
+      </a>
+    </nav>
+  </div>
+</header>
 
       {/* Hero */}
       <section id="home" className="relative overflow-hidden">
@@ -243,9 +257,32 @@ export default function App() {
             Modern, sleek production by design.
           </p>
           <div className="mt-8">
-            <a href="#book" className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition">
+            {/* Smooth-scroll to Booking */}
+            <a
+              href="#book"
+              onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
+              className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition"
+            >
               Book Now
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Gallery (moved up under hero) */}
+      <section id="gallery" className="py-16 border-t border-white/10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {GALLERY_IMAGES.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt={`Event photo ${i + 1}`}
+                className="aspect-video object-cover rounded-xl border border-white/10"
+                loading="lazy"
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -418,24 +455,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Gallery */}
-      <section id="gallery" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GALLERY_IMAGES.map((src, i) => (
-              <img
-                key={src}
-                src={src}
-                alt={`Event photo ${i + 1}`}
-                className="aspect-video object-cover rounded-xl border border-white/10"
-                loading="lazy"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Contact & Booking */}
       <section id="contact" className="py-16 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -575,9 +594,27 @@ export default function App() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-sm flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/60">© {new Date().getFullYear()} MKM Entertainment LLC. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <a href="#book" className="hover:text-red-400">Book</a>
-            <a href="#gallery" className="hover:text-red-400">Gallery</a>
-            <a href="#contact" className="hover:text-red-400">Contact</a>
+            <a
+              href="#book"
+              onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
+              className="hover:text-red-400"
+            >
+              Book
+            </a>
+            <a
+              href="#gallery"
+              onClick={(e) => { e.preventDefault(); scrollToId("#gallery"); }}
+              className="hover:text-red-400"
+            >
+              Gallery
+            </a>
+            <a
+              href="#contact"
+              onClick={(e) => { e.preventDefault(); scrollToId("#contact"); }}
+              className="hover:text-red-400"
+            >
+              Contact
+            </a>
           </div>
           <div className="text-white/60">
             MKM Line:{" "}
