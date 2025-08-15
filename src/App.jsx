@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from "react";
 
 /* ===== Business info ===== */
-const CONTACT_EMAIL = "michaelkylemusic@icloud.com";
-const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com"; // used server-side via PR_BCC too
-const BUSINESS_PHONE_DISPLAY = "(217) 883-0078"; // MKM line (footer)
+const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
+const PIZZA_RECORDS_EMAIL = "pizzarecords@aol.com";
+const BUSINESS_PHONE_DISPLAY = "(217) 883-0078";
 const BUSINESS_PHONE_TEL = "+12178830078";
-const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896"; // Venue card phone
+const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896";
 const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
-const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // put the file in /public
+const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // file is in /public
 
 /* ===== Gallery images (in /public/gallery) ===== */
 const GALLERY_IMAGES = [
@@ -19,6 +19,10 @@ const GALLERY_IMAGES = [
   "/gallery/event5.jpg",
   "/gallery/event6.jpg",
 ];
+
+/* API endpoint (hard-coded to your current production deployment) */
+const API_URL =
+  "https://mkm-site-ltruqhqvp-mdog48765s-projects.vercel.app/api/send-email";
 
 export default function App() {
   const [logoBroken, setLogoBroken] = useState(false);
@@ -42,12 +46,7 @@ export default function App() {
         title: "Pizza Records – Preferred PLUS",
         price: "$350",
         popular: true,
-        features: [
-          "Venue Space",
-          "Sound",
-          "Lighting",
-          "Multi-track sound recording (No mastering, only files)",
-        ],
+        features: ["Venue Space", "Sound", "Lighting", "Multi-track sound recording (No mastering, only files)"],
       },
       {
         title: "Pizza Records – Premium",
@@ -114,10 +113,17 @@ export default function App() {
   const externalAddOns = useMemo(
     () => [
       { key: "Standard Lighting — $50", label: "Standard Lighting — $50 (4 small PARs, 2 thick PARs, DMX control)" },
-      { key: "Moving Lights & Special FX — $100", label: "Moving Lights & Special FX — $100 (incl. Standard, +2 moving heads, 2 spider lights, laser box, fog)" },
+      {
+        key: "Moving Lights & Special FX — $100",
+        label:
+          "Moving Lights & Special FX — $100 (incl. Standard, +2 moving heads, 2 spider lights, laser box, fog)",
+      },
       { key: "Full Lighting Show — $150", label: "Full Lighting Show — $150 (all above + 4 DJ boxes, 15 ft truss)" },
       { key: "Projected Visuals — $150", label: "Projected Visuals — $150 (1080p UST projector & screen)" },
-      { key: "Live Multitrack Recording — $50", label: "Live Multitrack Recording — $50 (per-channel capture for post mix/master)" },
+      {
+        key: "Live Multitrack Recording — $50",
+        label: "Live Multitrack Recording — $50 (per-channel capture for post mix/master)",
+      },
     ],
     []
   );
@@ -126,7 +132,7 @@ export default function App() {
   function scrollToId(id) {
     const el = document.querySelector(id);
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 80; // account for sticky header
+    const y = el.getBoundingClientRect().top + window.scrollY - 80;
     window.scrollTo({ top: y, behavior: "smooth" });
   }
 
@@ -148,7 +154,7 @@ export default function App() {
     setAddOns([]);
   }
 
-  /* ===== Submit (Server API via Resend) ===== */
+  /* ===== Submit (Server API) ===== */
   async function handleSubmit(e) {
     e.preventDefault();
     if (submitting) return;
@@ -159,6 +165,11 @@ export default function App() {
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
+    const isPizzaBooking = bookingType === "Pizza Records";
+    const subjectTag = isPizzaBooking ? "[Pizza Records]" : "[External]";
+    const chosenService =
+      selectedService || form.get("service") || (isPizzaBooking ? "Pizza Records – Basic" : "External – Compact PA");
+
     const payload = {
       name: form.get("name") || "",
       email: form.get("email") || "",
@@ -168,80 +179,73 @@ export default function App() {
       message: form.get("message") || "",
       bookingType,
       selectedService: selectedService || "",
-      addOns: bookingType === "External" ? addOns : [],
+      addOns: isPizzaBooking ? [] : addOns,
+      subject: `${subjectTag} ${chosenService} — Booking Request`,
+      // NOTE: Recipient routing is handled server-side in /api/send-email
     };
 
     try {
-      const res = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `Request failed (${res.status})`);
-      }
-      setSent(true);
-      formEl.reset();
-      clearCart();
-    } catch (err) {
-      setErrorMsg(err?.message || "Something went wrong sending your request.");
-    } finally {
-      setSubmitting(false);
-    }
+  const res = await fetch("/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  // Try to read server response (even on errors)
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    console.error("Send failed:", res.status, json);
+    throw new Error(json?.error || `Request failed (${res.status})`);
+  }
+
+  // Optional: see who the server actually sent to
+  if (json?.results) {
+    console.log("Server sent to:", json.results.map(r => r.to));
+  }
+
+  setSent(true);
+  formEl.reset();
+  clearCart();
+} catch (err) {
+  console.error("Send error:", err);
+  setErrorMsg(err?.message || "Something went wrong sending your request.");
+} finally {
+  setSubmitting(false);
+}
   }
 
   /* ===== UI ===== */
   return (
     <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
-  <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-    {/* Logo */}
-    <a
-      href="#home"
-      onClick={(e) => { e.preventDefault(); scrollToId("#home"); }}
-      className="flex items-center gap-3"
-    >
-      {logoBroken ? (
-        <div className="h-8 w-8 rounded bg-red-600" aria-label="MKM Logo" />
-      ) : (
-        <img
-          src={LOGO_SRC}
-          alt="MKM Entertainment Logo"
-          className="h-8 w-8 object-contain"
-          onError={() => setLogoBroken(true)}
-        />
-      )}
-      <span className="font-semibold tracking-wide">MKM Entertainment LLC</span>
-    </a>
-
-    {/* Nav */}
-    <nav className="flex items-center gap-8 text-sm">
-      <a
-        href="#book"
-        onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
-        className="hover:text-red-400"
-      >
-        Book
-      </a>
-      <a
-        href="#gallery"
-        onClick={(e) => { e.preventDefault(); scrollToId("#gallery"); }}
-        className="hover:text-red-400"
-      >
-        Gallery
-      </a>
-      <a
-        href="#contact"
-        onClick={(e) => { e.preventDefault(); scrollToId("#contact"); }}
-        className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition"
-      >
-        Contact
-      </a>
-    </nav>
-  </div>
-</header>
+      <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
+        <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <a href="#home" className="flex items-center gap-3">
+            {logoBroken ? (
+              <div className="h-20 w-20 rounded bg-red-600" aria-label="MKM Logo" />
+            ) : (
+              <img
+                src={LOGO_SRC}
+                alt="MKM Logo"
+                className="h-20 w-20 object-contain"
+                onError={() => setLogoBroken(true)}
+              />
+            )}
+            {/* Text label removed per your request */}
+          </a>
+          <nav className="hidden md:flex items-center gap-8 text-sm">
+            <a href="#book" className="hover:text-red-400">Book</a>
+            <a href="#gallery" className="hover:text-red-400">Gallery</a>
+            <a
+              href="#contact"
+              className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition"
+            >
+              Contact
+            </a>
+          </nav>
+        </div>
+      </header>
 
       {/* Hero */}
       <section id="home" className="relative overflow-hidden">
@@ -257,10 +261,8 @@ export default function App() {
             Modern, sleek production by design.
           </p>
           <div className="mt-8">
-            {/* Smooth-scroll to Booking */}
             <a
               href="#book"
-              onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
               className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition"
             >
               Book Now
@@ -269,7 +271,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Gallery (moved up under hero) */}
+      {/* Gallery (directly under Hero) */}
       <section id="gallery" className="py-16 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
@@ -328,7 +330,11 @@ export default function App() {
                     <div
                       key={p.title}
                       className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
-                      ${selectedService === p.title ? "ring-2 ring-red-500" : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"}`}
+                        ${
+                          selectedService === p.title
+                            ? "ring-2 ring-red-500"
+                            : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"
+                        }`}
                     >
                       {p.popular && (
                         <span className="self-end -mt-3 mb-2 inline-flex items-center rounded-full bg-red-600 px-2 py-1 text-xs font-semibold shadow">
@@ -365,7 +371,11 @@ export default function App() {
                       <div
                         key={p.title}
                         className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
-                        ${selectedService === p.title ? "ring-2 ring-red-500" : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"}`}
+                          ${
+                            selectedService === p.title
+                              ? "ring-2 ring-red-500"
+                              : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"
+                          }`}
                       >
                         {p.popular && (
                           <span className="self-end -mt-3 mb-2 inline-flex items-center rounded-full bg-red-600 px-2 py-1 text-xs font-semibold shadow">
@@ -400,7 +410,7 @@ export default function App() {
                         <label
                           key={a.key}
                           className={`flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 cursor-pointer
-                          ${addOns.includes(a.key) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
+                            ${addOns.includes(a.key) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
                         >
                           <input
                             type="checkbox"
@@ -413,7 +423,8 @@ export default function App() {
                       ))}
                     </div>
                     <p className="mt-3 text-xs text-white/60">
-                      Operator included when we run equipment. Travel outside local area billed at $0.50/mi (round trip).
+                      Operator included when we run equipment. Travel outside local area billed at $0.50/mi (round
+                      trip).
                     </p>
                   </div>
                 </>
@@ -421,7 +432,10 @@ export default function App() {
             </div>
 
             {/* Cart */}
-            <aside id="cart" className="lg:sticky lg:top-24 h-fit rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]">
+            <aside
+              id="cart"
+              className="lg:sticky lg:top-24 h-fit rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]"
+            >
               <h3 className="text-xl font-semibold">Your Selection</h3>
               <dl className="mt-4 space-y-2 text-sm">
                 <div className="grid grid-cols-4 gap-2">
@@ -441,10 +455,19 @@ export default function App() {
               </dl>
 
               <div className="mt-6 flex gap-3">
-                <button onClick={() => { setSelectedService(""); setAddOns([]); }} className="inline-flex rounded-full border border-white/20 px-4 py-2 text-sm hover:border-white/40">
+                <button
+                  onClick={() => {
+                    setSelectedService("");
+                    setAddOns([]);
+                  }}
+                  className="inline-flex rounded-full border border-white/20 px-4 py-2 text-sm hover:border-white/40"
+                >
                   Clear
                 </button>
-                <button onClick={() => scrollToId("#contact")} className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500">
+                <button
+                  onClick={() => scrollToId("#contact")}
+                  className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
+                >
                   Proceed to Contact
                 </button>
               </div>
@@ -467,15 +490,29 @@ export default function App() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="text-sm text-white/80">Your Name</label>
-                  <input name="name" type="text" required className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600" />
+                  <input
+                    name="name"
+                    type="text"
+                    required
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+                  />
                 </div>
                 <div>
                   <label className="text-sm text-white/80">Email</label>
-                  <input name="email" type="email" required className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600" />
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+                  />
                 </div>
                 <div>
                   <label className="text-sm text-white/80">Phone</label>
-                  <input name="phone" type="tel" className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600" />
+                  <input
+                    name="phone"
+                    type="tel"
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+                  />
                 </div>
 
                 {/* Service (controlled & synced with cart) */}
@@ -484,8 +521,7 @@ export default function App() {
                   <select
                     name="service"
                     value={
-                      selectedService ||
-                      (bookingType === "External" ? "External – Compact PA" : "Pizza Records – Basic")
+                      selectedService || (bookingType === "External" ? "External – Compact PA" : "Pizza Records – Basic")
                     }
                     onChange={(e) => {
                       const next = e.target.value;
@@ -507,7 +543,11 @@ export default function App() {
 
                 <div>
                   <label className="text-sm text-white/80">Target Date</label>
-                  <input name="date" type="date" className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600" />
+                  <input
+                    name="date"
+                    type="date"
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+                  />
                 </div>
 
                 <div className="sm:col-span-2">
@@ -533,7 +573,10 @@ export default function App() {
                   {submitting ? "Sending…" : "Send Booking Request"}
                 </button>
                 <p className="text-sm text-white/60">
-                  Direct email: <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+                  Direct email:{" "}
+                  <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>
+                    {CONTACT_EMAIL}
+                  </a>
                 </p>
               </div>
 
@@ -556,19 +599,11 @@ export default function App() {
                 <InfoRow label="Venue" value="Pizza Records (Jacksonville, IL)" />
                 <InfoRow
                   label="Phone"
-                  value={
-                    <a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>
-                      {PIZZA_RECORDS_PHONE_DISPLAY}
-                    </a>
-                  }
+                  value={<a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>{PIZZA_RECORDS_PHONE_DISPLAY}</a>}
                 />
                 <InfoRow
                   label="Email"
-                  value={
-                    <a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>
-                      {PIZZA_RECORDS_EMAIL}
-                    </a>
-                  }
+                  value={<a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>{PIZZA_RECORDS_EMAIL}</a>}
                 />
                 <InfoRow label="Address" value={VENUE_ADDRESS} />
               </div>
@@ -594,27 +629,9 @@ export default function App() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-sm flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/60">© {new Date().getFullYear()} MKM Entertainment LLC. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <a
-              href="#book"
-              onClick={(e) => { e.preventDefault(); scrollToId("#book"); }}
-              className="hover:text-red-400"
-            >
-              Book
-            </a>
-            <a
-              href="#gallery"
-              onClick={(e) => { e.preventDefault(); scrollToId("#gallery"); }}
-              className="hover:text-red-400"
-            >
-              Gallery
-            </a>
-            <a
-              href="#contact"
-              onClick={(e) => { e.preventDefault(); scrollToId("#contact"); }}
-              className="hover:text-red-400"
-            >
-              Contact
-            </a>
+            <a href="#book" className="hover:text-red-400">Book</a>
+            <a href="#gallery" className="hover:text-red-400">Gallery</a>
+            <a href="#contact" className="hover:text-red-400">Contact</a>
           </div>
           <div className="text-white/60">
             MKM Line:{" "}

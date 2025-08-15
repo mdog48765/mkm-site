@@ -1,17 +1,15 @@
 // /api/send-email.js
 import { Resend } from "resend";
 
-const VERSION = "route-dual-004"; // visible in GET so we can verify what's live
+const VERSION = "route-strict-003"; // <-- we will look for this
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM || "no-reply@mkmentertainmentllc.com";
-
-// Target inboxes
-const MKM   = "michaelkylemusic@icloud.com";
+const MKM = "michaelkylemusic@icloud.com";
 const PIZZA = "pizzarecords@aol.com";
 
 export default async function handler(req, res) {
-  // CORS + disable caching (avoid any edge cache weirdness)
+  // CORS + NO CACHE (avoid any edge caching confusion)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -23,9 +21,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, route: "/api/send-email", version: VERSION });
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
     const {
@@ -44,7 +40,6 @@ export default async function handler(req, res) {
     const normalizedType = (bookingType || "").trim().toLowerCase();
     const isPizza = normalizedType === "pizza records"; // STRICT equality
 
-    // Build the plain-text body
     const textBody = `
 Booking Type: ${bookingType || "N/A"}
 Selected Service: ${selectedService || service || "N/A"}
@@ -59,35 +54,35 @@ Message:
 ${message || "(no message)"}
 `.trim();
 
-    // Routing:
-    //  - Pizza Records booking -> send to BOTH MKM + PR
-    //  - External booking -> send to MKM only
-    const recipients = isPizza ? [MKM, PIZZA] : [MKM];
+    async function sendOne(to) {
+      const r = await resend.emails.send({
+        from: `MKM Website <${FROM}>`,
+        to,
+        subject,
+        text: textBody,
+        reply_to: email || undefined,
+        headers: { "List-Unsubscribe": "<mailto:no-reply@mkmentertainmentllc.com>" },
+      });
+      return { to, id: r?.data?.id || null, error: r?.error || null };
+    }
+
+    const recipients = [MKM];
+    if (isPizza) recipients.push(PIZZA);
 
     console.log("Routing email", { version: VERSION, bookingType, normalizedType, recipients });
 
-    // Single send with array `to` when Pizza Records
-    const result = await resend.emails.send({
-      from: `MKM Website <${FROM}>`,
-      to: recipients,                 // string | string[]
-      subject,
-      text: textBody,
-      reply_to: email || undefined,
-      headers: { "List-Unsubscribe": "<mailto:no-reply@mkmentertainmentllc.com>" },
-    });
-
-    // Basic success/guard
-    if (result?.error) {
-      console.error("Resend error:", result.error);
-      return res.status(502).json({ ok: false, error: "Email send failed", details: result.error });
+    const results = [];
+    for (const to of recipients) {
+      // eslint-disable-next-line no-await-in-loop
+      results.push(await sendOne(to));
     }
 
-    return res.status(200).json({
-      ok: true,
-      version: VERSION,
-      to: recipients,
-      id: result?.data?.id || null,
-    });
+    const mkmResult = results.find(r => r.to === MKM);
+    if (!mkmResult || mkmResult.error) {
+      return res.status(502).json({ ok: false, error: "MKM delivery failed", details: mkmResult || null });
+    }
+
+    return res.status(200).json({ ok: true, version: VERSION, results });
   } catch (e) {
     console.error("Email handler error:", e);
     return res.status(500).json({ ok: false, error: "Server error", details: e?.message || String(e) });
