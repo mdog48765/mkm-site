@@ -211,6 +211,69 @@ export default function App() {
     setAddOns([]);
   }
 
+  function AboutSection() {
+  return (
+    <section id="about" className="py-16 border-t border-white/10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 md:grid-cols-3 items-start">
+          {/* Photo + caption */}
+          <div className="md:col-span-1">
+            <img
+              src="/images/michael-mixing.jpg"
+              alt="Michael Kyle mixing a live event"
+              className="rounded-2xl border border-white/10 object-cover w-full"
+            />
+            <p className="text-sm text-white/50 mt-2 italic text-center">Humble Beginnings</p>
+          </div>
+
+          {/* Text */}
+          <div className="md:col-span-2">
+            <h2 className="text-3xl sm:text-4xl font-bold">About MKM Entertainment</h2>
+            <div className="mt-6 space-y-4 text-white/80">
+              <p>
+                MKM Entertainment started with a small, well-used, “Frankensteined” sound system and a mission:
+                deliver affordable, quality sound to anyone ready to step into the world of live entertainment.
+                From weddings to raves, rock shows to hip hop nights, and everything in between — we’ve done it all.
+              </p>
+              <p>
+                Now in our third year of professionally running sound and lighting, we’ve grown into a trusted partner
+                for events across Illinois. We specialize in EDM but have built a reputation for rocking metal,
+                hip hop, and everything in between.
+              </p>
+              <p>
+                While we don’t currently handle sound for crowds over 400, we’re scaling toward serving all markets — big
+                and small — with the same focus: quality production at fair prices. Our QSC rig is crystal-clear, plenty loud,
+                and dynamic enough for everything from speeches and corporate events to local music festivals.
+              </p>
+              <p>
+                We keep the whole process streamlined and stress-free — from booking to showtime to teardown — with clear
+                communication and a balance of professionalism and customer care.
+              </p>
+              <p>
+                Our partnership with Pizza Records has been pivotal to our growth, serving the community with affordable,
+                regular, high-quality entertainment while simplifying production for both seasoned and first-time promoters.
+              </p>
+              <blockquote className="italic border-l-4 border-red-600 pl-4">
+                “They were easy to work with and professional.”
+              </blockquote>
+              <p>
+                <strong>About the Owner:</strong> I’m Michael Kyle — founder, owner, and operator of MKM Entertainment.
+                I’m hands-on every step and committed to expanding our reach. A great night is a smooth-flowing show with
+                great vibes — everyone working together to deliver an amazing experience.
+              </p>
+              <p>
+                Based in Jacksonville, IL. Directly partnered with Pizza Records. We travel anywhere in Illinois (mileage
+                applies outside the local area). Proud member of Harmony Lodge No. 3.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
   /* ===== Submit (Server API) ===== */
   async function handleSubmit(e) {
     e.preventDefault();
