@@ -292,15 +292,14 @@ export default function App() {
             {/* Text label removed per your request */}
           </a>
           <nav className="hidden md:flex items-center gap-8 text-sm">
+            <a href="#about" className="hover:text-red-400">About</a>
             <a href="#book" className="hover:text-red-400">Book</a>
             <a href="#gallery" className="hover:text-red-400">Gallery</a>
-            <a
-              href="#contact"
-              className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition"
-            >
-              Contact
+            <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
+               Contact
             </a>
           </nav>
+
         </div>
       </header>
 
@@ -345,6 +344,9 @@ export default function App() {
           </div>
         </div>
       </section>
+
+      {/* About */}
+      <AboutSection />
 
       {/* Booking */}
       <section id="book" className="py-16 border-t border-white/10">
