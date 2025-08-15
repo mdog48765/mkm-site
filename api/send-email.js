@@ -21,6 +21,7 @@ export default async function handler(req, res) {
     } = req.body;
 
     if (!name || !email || !subject) {
+      console.warn("Missing required fields:", { name, email, subject });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -39,6 +40,15 @@ export default async function handler(req, res) {
       ];
     }
 
+    console.log("Incoming booking request:", {
+      bookingType,
+      recipients,
+      from: email,
+      name,
+      selectedService,
+      addOns,
+    });
+
     const emailBody = `
       Name: ${name}
       Email: ${email}
@@ -53,12 +63,14 @@ export default async function handler(req, res) {
 
     const results = [];
     for (const to of recipients) {
+      console.log(`Sending email to: ${to}`);
       const result = await resend.emails.send({
         from: "MKM Entertainment <no-reply@mkmentertainmentllc.com>",
         to,
         subject,
         text: emailBody,
       });
+      console.log(`Email sent to ${to} with ID: ${result.id}`);
       results.push({ to, id: result.id });
     }
 
