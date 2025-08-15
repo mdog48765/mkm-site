@@ -12,12 +12,12 @@ const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // file is in /pub
 
 /* ===== Gallery images (in /public/gallery) ===== */
 const GALLERY_IMAGES = [
-  "/gallery/event1.jpg",
-  "/gallery/event2.jpg",
-  "/gallery/event3.jpg",
-  "/gallery/event4.jpg",
-  "/gallery/event5.jpg",
-  "/gallery/event6.jpg",
+  "/gallery/event1.jpg?v=1",
+  "/gallery/event2.jpg?v=1",
+  "/gallery/event3.jpg?v=1",
+  "/gallery/event4.jpg?v=1",
+  "/gallery/event5.jpg?v=1",
+  "/gallery/event6.jpg?v=1",
 ];
 
 /* API endpoint (hard-coded to your current production deployment) */
