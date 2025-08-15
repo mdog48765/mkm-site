@@ -1,95 +1,70 @@
-// /api/send-email.js
+// api/send-email.js
 import { Resend } from "resend";
 
-const VERSION = "route-dual-004"; // visible in GET so we can verify what's live
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM || "no-reply@mkmentertainmentllc.com";
-
-// Target inboxes
-const MKM   = "michaelkylemusic@icloud.com";
-const PIZZA = "pizzarecords@aol.com";
-
 export default async function handler(req, res) {
-  // CORS + disable caching (avoid any edge cache weirdness)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-
-  if (req.method === "GET") {
-    return res.status(200).json({ ok: true, route: "/api/send-email", version: VERSION });
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const {
-      name = "",
-      email = "",
-      phone = "",
-      service = "",
-      date = "",
-      message = "",
-      bookingType = "",
-      selectedService = "",
-      addOns = [],
-      subject = "MKM Booking Request",
-    } = req.body || {};
-
-    const normalizedType = (bookingType || "").trim().toLowerCase();
-    const isPizza = normalizedType === "pizza records"; // STRICT equality
-
-    // Build the plain-text body
-    const textBody = `
-Booking Type: ${bookingType || "N/A"}
-Selected Service: ${selectedService || service || "N/A"}
-Add-Ons: ${Array.isArray(addOns) && addOns.length ? addOns.join(", ") : "None"}
-Event Date: ${date || "Not specified"}
-
-From: ${name || "(no name)"}
-Email: ${email || "(no email)"}
-Phone: ${phone || "(no phone)"}
-
-Message:
-${message || "(no message)"}
-`.trim();
-
-    // Routing:
-    //  - Pizza Records booking -> send to BOTH MKM + PR
-    //  - External booking -> send to MKM only
-    const recipients = isPizza ? [MKM, PIZZA] : [MKM];
-
-    console.log("Routing email", { version: VERSION, bookingType, normalizedType, recipients });
-
-    // Single send with array `to` when Pizza Records
-    const result = await resend.emails.send({
-      from: `MKM Website <${FROM}>`,
-      to: recipients,                 // string | string[]
+      name,
+      email,
+      phone,
+      service,
+      date,
+      message,
+      bookingType,
+      selectedService,
+      addOns,
       subject,
-      text: textBody,
-      reply_to: email || undefined,
-      headers: { "List-Unsubscribe": "<mailto:no-reply@mkmentertainmentllc.com>" },
-    });
+    } = req.body;
 
-    // Basic success/guard
-    if (result?.error) {
-      console.error("Resend error:", result.error);
-      return res.status(502).json({ ok: false, error: "Email send failed", details: result.error });
+    if (!name || !email || !subject) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    return res.status(200).json({
-      ok: true,
-      version: VERSION,
-      to: recipients,
-      id: result?.data?.id || null,
-    });
-  } catch (e) {
-    console.error("Email handler error:", e);
-    return res.status(500).json({ ok: false, error: "Server error", details: e?.message || String(e) });
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // Decide who gets the email based on bookingType
+    let recipients = [];
+    if (bookingType === "Pizza Records") {
+      recipients = [
+        "pizzarecords@aol.com",         // Pizza Records
+        "mkmentertainmentllc@icloud.com" // MKM copy
+      ];
+    } else {
+      recipients = [
+        "mkmentertainmentllc@icloud.com" // External bookings only go to MKM
+      ];
+    }
+
+    const emailBody = `
+      Name: ${name}
+      Email: ${email}
+      Phone: ${phone}
+      Service: ${service}
+      Date: ${date}
+      Booking Type: ${bookingType}
+      Selected Service: ${selectedService}
+      Add-ons: ${Array.isArray(addOns) ? addOns.join(", ") : ""}
+      Message: ${message}
+    `;
+
+    const results = [];
+    for (const to of recipients) {
+      const result = await resend.emails.send({
+        from: "MKM Entertainment <no-reply@mkmentertainmentllc.com>",
+        to,
+        subject,
+        text: emailBody,
+      });
+      results.push({ to, id: result.id });
+    }
+
+    return res.status(200).json({ ok: true, results });
+  } catch (err) {
+    console.error("Send error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
