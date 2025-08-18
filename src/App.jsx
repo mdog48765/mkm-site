@@ -353,7 +353,7 @@ export default function App() {
             )}
             {/* Text label removed per your request */}
           </a>
-          <nav className="hidden md:flex items-center gap-8 text-sm">
+          <nav className="flex items-center gap-8 text-sm">
             <a href="#about" className="hover:text-red-400">About</a>
             <a href="#book" className="hover:text-red-400">Book</a>
             <a href="#gallery" className="hover:text-red-400">Gallery</a>
