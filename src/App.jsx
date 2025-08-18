@@ -237,8 +237,7 @@ export default function App() {
               </p>
               <p>
                 Now in our third year of professionally running sound and lighting, we’ve grown into a trusted partner
-                for events across Illinois. We specialize in EDM but have built a reputation for rocking metal,
-                hip hop, and everything in between.
+                for events across Illinois.
               </p>
               <p>
                 While we don’t currently handle sound for crowds over 400, we’re scaling toward serving all markets — big
