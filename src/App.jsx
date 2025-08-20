@@ -1,4 +1,19 @@
 import React, { useMemo, useState } from "react";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+
+// ⬇️ add this import
+import { Analytics } from '@vercel/analytics/react'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+    {/* ⬇️ Add once anywhere inside the root */}
+    <Analytics />
+  </React.StrictMode>
+)
+
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
