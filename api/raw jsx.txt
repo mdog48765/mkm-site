@@ -1,4 +1,6 @@
-import React, { useMemo, useState, useEffect } from "react";
+raw jsx
+
+import React, { useMemo, useState } from "react";
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
@@ -20,13 +22,66 @@ const GALLERY_IMAGES = [
   "/gallery/event6.jpg?v=1",
 ];
 
+{/* About Section */}
+<section id="about" className="bg-black text-white py-16 px-6">
+  <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
+    {/* Photo */}
+    <div className="flex-shrink-0 w-full md:w-1/3">
+      <img
+        src="/images/michael-mixing.jpg"
+        alt="Michael Kyle mixing a live event"
+        className="rounded-2xl shadow-lg object-cover w-full h-auto"
+      />
+      <p className="text-sm text-gray-400 mt-2 italic text-center">Humble Beginnings</p>
+    </div>
+
+    {/* Text */}
+    <div className="flex-1">
+      <h2 className="text-3xl font-bold text-red-600 mb-6">About MKM Entertainment</h2>
+      <p className="mb-4">
+        MKM Entertainment started with a small, well-used, “Frankensteined” sound system and a mission:
+        deliver affordable, quality sound to anyone ready to step into the world of live entertainment.
+        From weddings to raves, rock shows to hip hop nights, and everything in between — we’ve done it all.
+      </p>
+      <p className="mb-4">
+        Now in our third year of professionally running sound and lighting, we’ve grown into a trusted partner
+        for events across Illinois. We specialize in EDM but have built a reputation for rocking metal,
+        hip hop, and everything in between.
+      </p>
+      <p className="mb-4">
+        While we don’t currently handle sound for crowds over 400, we’re scaling toward serving all markets — big
+        and small — with the same focus: quality production at fair prices. Our QSC rig is crystal-clear, plenty loud,
+        and dynamic enough to deliver perfect sound for everything from speeches and corporate events to local music festivals.
+      </p>
+      <p className="mb-4">
+        We believe the entire process — from booking to showtime to teardown — should be streamlined and stress-free.
+        Professionalism and customer care go hand-in-hand, and clear communication is at the heart of everything we do.
+      </p>
+      <p className="mb-4">
+        Our partnership with Pizza Records has been pivotal to our growth, allowing us to serve the community with affordable,
+        regular, high-quality entertainment while simplifying the production process for both seasoned and first-time promoters.
+      </p>
+      <blockquote className="italic border-l-4 border-red-600 pl-4 mb-4">
+        “They were easy to work with and professional.” — Client Testimonial
+      </blockquote>
+      <p className="mb-4">
+        <strong>About the Owner:</strong> I’m Michael Kyle — founder, owner, and operator of MKM Entertainment.
+        I’m hands-on in every part of the process and committed to expanding our reach over the next few years.
+        A great night for me is a smooth-flowing show with a good turnout and great vibes — when everyone works
+        together to deliver an amazing experience.
+      </p>
+      <p>
+        We operate out of Jacksonville, IL, and are directly partnered with Pizza Records for the majority of our events.
+        We’ll travel anywhere in Illinois, with mileage charged outside our local area. I’m also a proud member of Harmony Lodge No. 3.
+      </p>
+    </div>
+  </div>
+</section>
+
+
 /* API endpoint (hard-coded to your current production deployment) */
 const API_URL =
   "https://mkm-site-ltruqhqvp-mdog48765s-projects.vercel.app/api/send-email";
-
-/* ===== Helpers ===== */
-const trim = (s) => (s || "").replace(/\s+/g, " ").trim();
-const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trim(s || ""));
 
 export default function App() {
   const [logoBroken, setLogoBroken] = useState(false);
@@ -40,19 +95,6 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [errors, setErrors] = useState({}); // field-level errors
-  const [messagePreviewLen, setMessagePreviewLen] = useState(0); // live count (uncontrolled textarea)
-
-  // Client throttle (60s)
-  const [canSubmit, setCanSubmit] = useState(true);
-  useEffect(() => {
-    try {
-      const last = Number(localStorage.getItem("mkm_last_submit_ts") || "0");
-      setCanSubmit(Date.now() - last > 60_000);
-    } catch {
-      setCanSubmit(true);
-    }
-  }, [submitting, sent]);
 
   /* ===== Packages & Add-ons ===== */
   const pizzaPackages = useMemo(
@@ -145,7 +187,7 @@ export default function App() {
     []
   );
 
-  /* ===== UI helpers ===== */
+  /* ===== Helpers ===== */
   function scrollToId(id) {
     const el = document.querySelector(id);
     if (!el) return;
@@ -172,110 +214,66 @@ export default function App() {
   }
 
   function AboutSection() {
-    return (
-      <section id="about" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-3 items-start">
-            {/* Photo + caption */}
-            <div className="md:col-span-1">
-              <img
-                src="/images/michael-mixing.jpg"
-                alt="Michael Kyle mixing a live event"
-                className="rounded-2xl border border-white/10 object-cover w-full"
-              />
-              <p className="text-sm text-white/50 mt-2 italic text-center">Humble Beginnings</p>
-            </div>
+  return (
+    <section id="about" className="py-16 border-t border-white/10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 md:grid-cols-3 items-start">
+          {/* Photo + caption */}
+          <div className="md:col-span-1">
+            <img
+              src="/images/michael-mixing.jpg"
+              alt="Michael Kyle mixing a live event"
+              className="rounded-2xl border border-white/10 object-cover w-full"
+            />
+            <p className="text-sm text-white/50 mt-2 italic text-center">Humble Beginnings</p>
+          </div>
 
-            {/* Text */}
-            <div className="md:col-span-2">
-              <h2 className="text-3xl sm:text-4xl font-bold">About MKM Entertainment</h2>
-              <div className="mt-6 space-y-4 text-white/80">
-                <p>
-                  MKM Entertainment started with a small, well-used, “Frankensteined” sound system and a mission:
-                  deliver affordable, quality sound to anyone ready to step into the world of live entertainment.
-                  From weddings to raves, rock shows to hip hop nights, and everything in between — we’ve done it all.
-                </p>
-                <p>
-                  Now in our third year of professionally running sound and lighting, we’ve grown into a trusted partner
-                  for events across Illinois.
-                </p>
-                <p>
-                  While we don’t currently handle sound for crowds over 400, we’re scaling toward serving all markets — big
-                  and small — with the same focus: quality production at fair prices. Our QSC rig is crystal-clear, plenty loud,
-                  and dynamic enough for everything from speeches and corporate events to local music festivals.
-                </p>
-                <p>
-                  We keep the whole process streamlined and stress-free — from booking to showtime to teardown — with clear
-                  communication and a balance of professionalism and customer care.
-                </p>
-                <p>
-                  Our partnership with Pizza Records has been pivotal to our growth, serving the community with affordable,
-                  regular, high-quality entertainment while simplifying production for both seasoned and first-time promoters.
-                </p>
-                <blockquote className="italic border-l-4 border-red-600 pl-4">
-                  “They were easy to work with and professional.”
-                </blockquote>
-                <p>
-                  <strong>About the Owner:</strong> I’m Michael Kyle — founder, owner, and operator of MKM Entertainment.
-                  I’m hands-on every step and committed to expanding our reach. A great night is a smooth-flowing show with
-                  great vibes — everyone working together to deliver an amazing experience.
-                </p>
-                <p>
-                  Based in Jacksonville, IL. Directly partnered with Pizza Records. We travel anywhere in Illinois (mileage
-                  applies outside the local area). Proud member of Harmony Lodge No. 3.
-                </p>
-              </div>
+          {/* Text */}
+          <div className="md:col-span-2">
+            <h2 className="text-3xl sm:text-4xl font-bold">About MKM Entertainment</h2>
+            <div className="mt-6 space-y-4 text-white/80">
+              <p>
+                MKM Entertainment started with a small, well-used, “Frankensteined” sound system and a mission:
+                deliver affordable, quality sound to anyone ready to step into the world of live entertainment.
+                From weddings to raves, rock shows to hip hop nights, and everything in between — we’ve done it all.
+              </p>
+              <p>
+                Now in our third year of professionally running sound and lighting, we’ve grown into a trusted partner
+                for events across Illinois.
+              </p>
+              <p>
+                While we don’t currently handle sound for crowds over 400, we’re scaling toward serving all markets — big
+                and small — with the same focus: quality production at fair prices. Our QSC rig is crystal-clear, plenty loud,
+                and dynamic enough for everything from speeches and corporate events to local music festivals.
+              </p>
+              <p>
+                We keep the whole process streamlined and stress-free — from booking to showtime to teardown — with clear
+                communication and a balance of professionalism and customer care.
+              </p>
+              <p>
+                Our partnership with Pizza Records has been pivotal to our growth, serving the community with affordable,
+                regular, high-quality entertainment while simplifying production for both seasoned and first-time promoters.
+              </p>
+              <blockquote className="italic border-l-4 border-red-600 pl-4">
+                “They were easy to work with and professional.”
+              </blockquote>
+              <p>
+                <strong>About the Owner:</strong> I’m Michael Kyle — founder, owner, and operator of MKM Entertainment.
+                I’m hands-on every step and committed to expanding our reach. A great night is a smooth-flowing show with
+                great vibes — everyone working together to deliver an amazing experience.
+              </p>
+              <p>
+                Based in Jacksonville, IL. Directly partnered with Pizza Records. We travel anywhere in Illinois (mileage
+                applies outside the local area). Proud member of Harmony Lodge No. 3.
+              </p>
             </div>
           </div>
         </div>
-      </section>
-    );
-  }
+      </div>
+    </section>
+  );
+}
 
-  /* ===== Validation ===== */
-  function validateForm(form) {
-    const errs = {};
-    const name = trim(form.get("name"));
-    const email = trim(form.get("email"));
-    const phone = trim(form.get("phone"));
-    const message = trim(form.get("message"));
-    const date = trim(form.get("date"));
-    const service = trim(
-      selectedService ||
-        form.get("service") ||
-        (bookingType === "External" ? "External – Compact PA" : "Pizza Records – Basic")
-    );
-    const company = trim(form.get("company")); // honeypot
-
-    if (company.length > 0) {
-      errs.honeypot = "Spam detected.";
-    }
-    if (name.length < 2) {
-      errs.name = "Enter your full name (≥2 characters).";
-    }
-    if (!isEmail(email)) {
-      errs.email = "Enter a valid email.";
-    }
-    if (message.length < 20) {
-      errs.message = "Please provide more detail (≥20 characters).";
-    }
-    if (!service) {
-      errs.service = "Please select a package.";
-    }
-    if (!["Pizza Records", "External"].includes(bookingType)) {
-      errs.bookingType = "Choose a booking type.";
-    }
-    if (bookingType === "External" && addOns.length > 12) {
-      // sanity guard; should never happen
-      errs.addOns = "Too many add-ons selected.";
-    }
-    // Optional: basic date presence (not strictly required)
-    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      errs.date = "Invalid date.";
-    }
-
-    return errs;
-  }
 
   /* ===== Submit (Server API) ===== */
   async function handleSubmit(e) {
@@ -284,80 +282,58 @@ export default function App() {
     setSubmitting(true);
     setSent(false);
     setErrorMsg("");
-    setErrors({});
-
-    // Throttle check
-    if (!canSubmit) {
-      setSubmitting(false);
-      setErrorMsg("Please wait a moment before sending again.");
-      return;
-    }
 
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
-    // Preview count for UX (not required)
-    const msgLen = trim(form.get("message") || "").length;
-    setMessagePreviewLen(msgLen);
-
-    // Validate
-    const vErrs = validateForm(form);
-    if (Object.keys(vErrs).length > 0) {
-      setErrors(vErrs);
-      setErrorMsg(vErrs.honeypot ? "Submission blocked by spam filter." : "Fix the highlighted fields.");
-      setSubmitting(false);
-      return;
-    }
-
     const isPizzaBooking = bookingType === "Pizza Records";
     const subjectTag = isPizzaBooking ? "[Pizza Records]" : "[External]";
     const chosenService =
-      selectedService ||
-      form.get("service") ||
-      (isPizzaBooking ? "Pizza Records – Basic" : "External – Compact PA");
+      selectedService || form.get("service") || (isPizzaBooking ? "Pizza Records – Basic" : "External – Compact PA");
 
     const payload = {
-      name: trim(form.get("name") || ""),
-      email: trim(form.get("email") || ""),
-      phone: trim(form.get("phone") || ""),
-      service: chosenService,
-      date: trim(form.get("date") || ""),
-      message: trim(form.get("message") || ""),
+      name: form.get("name") || "",
+      email: form.get("email") || "",
+      phone: form.get("phone") || "",
+      service: form.get("service") || "",
+      date: form.get("date") || "",
+      message: form.get("message") || "",
       bookingType,
       selectedService: selectedService || "",
       addOns: isPizzaBooking ? [] : addOns,
-      company: trim(form.get("company") || ""), // honeypot travels to server
       subject: `${subjectTag} ${chosenService} — Booking Request`,
+      // NOTE: Recipient routing is handled server-side in /api/send-email
     };
 
     try {
-      const res = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  const res = await fetch("/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-      const json = await res.json().catch(() => ({}));
+  // Try to read server response (even on errors)
+  const json = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        throw new Error(json?.error || `Request failed (${res.status})`);
-      }
+  if (!res.ok) {
+    console.error("Send failed:", res.status, json);
+    throw new Error(json?.error || `Request failed (${res.status})`);
+  }
 
-      // success
-      try {
-        localStorage.setItem("mkm_last_submit_ts", String(Date.now()));
-      } catch {}
-      setSent(true);
-      formEl.reset();
-      clearCart();
-      setMessagePreviewLen(0);
-      setErrors({});
-      setErrorMsg("");
-    } catch (err) {
-      setErrorMsg(err?.message || "Something went wrong sending your request.");
-    } finally {
-      setSubmitting(false);
-    }
+  // Optional: see who the server actually sent to
+  if (json?.results) {
+    console.log("Server sent to:", json.results.map(r => r.to));
+  }
+
+  setSent(true);
+  formEl.reset();
+  clearCart();
+} catch (err) {
+  console.error("Send error:", err);
+  setErrorMsg(err?.message || "Something went wrong sending your request.");
+} finally {
+  setSubmitting(false);
+}
   }
 
   /* ===== UI ===== */
@@ -377,6 +353,7 @@ export default function App() {
                 onError={() => setLogoBroken(true)}
               />
             )}
+            {/* Text label removed per your request */}
           </a>
           <nav className="flex items-center gap-8 text-sm">
             <a href="#about" className="hover:text-red-400">About</a>
@@ -386,6 +363,7 @@ export default function App() {
                Contact
             </a>
           </nav>
+
         </div>
       </header>
 
@@ -632,12 +610,6 @@ export default function App() {
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
             {/* Form */}
             <form onSubmit={handleSubmit} noValidate className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              {/* Honeypot (hidden from users; bots often fill it) */}
-              <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
-                <label htmlFor="company">Company</label>
-                <input id="company" name="company" type="text" tabIndex={-1} autoComplete="organization" />
-              </div>
-
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="text-sm text-white/80">Your Name</label>
@@ -645,11 +617,8 @@ export default function App() {
                     name="name"
                     type="text"
                     required
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.name ? "border-red-500" : "border-white/10"
-                    }`}
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   />
-                  {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
                 </div>
                 <div>
                   <label className="text-sm text-white/80">Email</label>
@@ -657,11 +626,8 @@ export default function App() {
                     name="email"
                     type="email"
                     required
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.email ? "border-red-500" : "border-white/10"
-                    }`}
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   />
-                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                 </div>
                 <div>
                   <label className="text-sm text-white/80">Phone</label>
@@ -687,9 +653,7 @@ export default function App() {
                       setBookingType(nextType);
                       if (nextType === "Pizza Records") setAddOns([]);
                     }}
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.service ? "border-red-500" : "border-white/10"
-                    }`}
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   >
                     {pizzaPackages.map((p) => (
                       <option key={p.title}>{p.title}</option>
@@ -698,7 +662,6 @@ export default function App() {
                       <option key={p.title}>{p.title}</option>
                     ))}
                   </select>
-                  {errors.service && <p className="mt-1 text-xs text-red-500">{errors.service}</p>}
                 </div>
 
                 <div>
@@ -706,11 +669,8 @@ export default function App() {
                   <input
                     name="date"
                     type="date"
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.date ? "border-red-500" : "border-white/10"
-                    }`}
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                   />
-                  {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
                 </div>
 
                 <div className="sm:col-span-2">
@@ -718,29 +678,22 @@ export default function App() {
                   <textarea
                     name="message"
                     rows={5}
-                    placeholder="Event date, location, set length, genre, audience size, special needs..."
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.message ? "border-red-500" : "border-white/10"
-                    }`}
+                    placeholder="event details, number of vendors (including yourself) expected to sell merch)."
+                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
                     required
-                    onInput={(e) => setMessagePreviewLen(trim(e.currentTarget.value).length)}
                   />
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-white/50">
-                    <span>{messagePreviewLen} / 20</span>
-                    {errors.message && <span className="text-red-500">{errors.message}</span>}
-                  </div>
                 </div>
               </div>
 
               <div className="mt-6 flex items-center gap-3">
                 <button
                   type="submit"
-                  disabled={submitting || !canSubmit}
+                  disabled={submitting}
                   className={`inline-flex items-center rounded-full px-6 py-3 font-semibold transition ${
-                    submitting || !canSubmit ? "bg-red-800 cursor-not-allowed" : "bg-red-600 hover:bg-red-500"
+                    submitting ? "bg-red-800 cursor-not-allowed" : "bg-red-600 hover:bg-red-500"
                   }`}
                 >
-                  {submitting ? "Sending…" : canSubmit ? "Send Booking Request" : "Please wait…"}
+                  {submitting ? "Sending…" : "Send Booking Request"}
                 </button>
                 <p className="text-sm text-white/60">
                   Direct email:{" "}
@@ -757,12 +710,7 @@ export default function App() {
               )}
               {!!errorMsg && (
                 <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-              {"honeypot" in errors && (
-                <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                  Submission blocked by spam filter.
+                  Couldn’t send your request: {errorMsg}
                 </div>
               )}
             </form>
