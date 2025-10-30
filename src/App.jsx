@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import GALLERY from "./galleryList.json";
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
@@ -144,6 +145,24 @@ export default function App() {
     ],
     []
   );
+
+  // Safe image component (fallback on error)
+function SafeImg({ jpg, webp, alt }) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <picture>
+      {!broken && <source srcSet={webp} type="image/webp" />}
+      <img
+        src={broken ? "/images/fallback.png" : jpg}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onError={() => setBroken(true)}
+        className="aspect-video object-cover rounded-xl border border-white/10"
+      />
+    </picture>
+  );
+}
 
   /* ===== UI helpers ===== */
   function scrollToId(id) {
@@ -414,23 +433,16 @@ export default function App() {
       </section>
 
       {/* Gallery (directly under Hero) */}
-      <section id="gallery" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GALLERY_IMAGES.map((src, i) => (
-              <img
-                key={src}
-                src={src}
-                alt={`Event photo ${i + 1}`}
-                className="aspect-video object-cover rounded-xl border border-white/10"
-                loading="lazy"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
+<section id="gallery" className="py-16 border-t border-white/10">
+  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
+    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {GALLERY.map((g, i) => (
+        <SafeImg key={g.jpg} jpg={g.jpg} webp={g.webp} alt={`Event photo ${i + 1}`} />
+      ))}
+    </div>
+  </div>
+</section>
       {/* About */}
       <AboutSection />
 
