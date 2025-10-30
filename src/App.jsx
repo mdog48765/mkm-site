@@ -769,7 +769,7 @@ export default function App() {
 
             {/* Venue info */}
             <div className="rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]">
-              <h3 className="text-xl font-semibold">Rent Pizza Records</h3>
+              <h3 className="text-xl font-semibold">Find Pizza Records</h3>
               <div className="mt-4 grid gap-3 text-sm">
                 <InfoRow label="Venue" value="Pizza Records (Jacksonville, IL)" />
                 <InfoRow
