@@ -1,40 +1,40 @@
 // scripts/release.mjs
 import { execSync } from "child_process";
-import { fileURLToPath } from "url";
-import path from "path";
+import { exec } from "child_process";
 
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const run = (cmd, opts = {}) => {
-  console.log(`\n> ${cmd}`);
-  return execSync(cmd, { stdio: "inherit", cwd: path.join(ROOT, ".."), ...opts });
+const run = (cmd, label) => {
+  console.log(`\n▶ ${label}\n$ ${cmd}`);
+  execSync(cmd, { stdio: "inherit" });
 };
-
-const runGet = (cmd) => {
-  return execSync(cmd, { cwd: path.join(ROOT, "..") }).toString().trim();
-};
+const get = (cmd) => execSync(cmd).toString().trim();
 
 try {
-  // 1) Build/refresh gallery
-  run("node scripts/build-gallery.mjs");
+  // Optional custom message: npm run release -- "your message"
+  const msg = process.argv.slice(2).join(" ").trim();
 
-  // 2) Git add/commit/push if there are changes
-  const status = runGet("git status --porcelain");
-  if (status.length > 0) {
-    run("git add -A");
+  // 1) Build optimized gallery & (optionally) a local production build
+  run("npm run gallery", "Building/refreshing gallery assets");
+  // You can skip this next line if you don’t want a local prod build:
+  run("npm run build", "Local production build (vite)");
+
+  // 2) Commit & push only if there are changes
+  const status = get("git status --porcelain");
+  if (status) {
+    run("git add -A", "Staging all changes");
     const stamp = new Date().toISOString().replace("T", " ").slice(0, 16);
-    run(`git commit -m "Release: gallery build + deploy (${stamp})"`);
-    // Determine current branch and push
-    const branch = runGet("git rev-parse --abbrev-ref HEAD");
-    run(`git push -u origin ${branch}`);
+    const commitMsg = msg ? `Release: ${msg}` : `Release: site update (${stamp})`;
+    run(`git commit -m "${commitMsg}"`, "Committing");
+    const branch = get("git rev-parse --abbrev-ref HEAD");
+    run(`git push -u origin ${branch}`, `Pushing to GitHub (${branch})`);
   } else {
-    console.log("\n(no changes detected — skipping commit/push)");
+    console.log("\n(no file changes detected — skipping commit/push)");
   }
 
-  // 3) Vercel production deploy (assumes `vercel login` + `vercel link` already done)
-  run("vercel --prod --confirm");
+  // 3) Deploy to Vercel production (assumes you already did `vercel login` + `vercel link`)
+  run("vercel --prod", "Deploying to Vercel production");
 
-  console.log("\n✅ Release completed.");
-} catch (e) {
+  console.log("\n✅ Release complete.");
+} catch (err) {
   console.error("\n❌ Release failed.");
   process.exit(1);
 }
