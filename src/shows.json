@@ -1,0 +1,17 @@
+[
+    {
+        "id": "2025-12-06-pr",
+        "title": "Pizza Records Prom",
+        "dateText": "Saturday, Nov. 8th",
+        "timeText": "7PM-10PM",
+        "price": "$5",
+        "ages": "All Ages",
+        "lineup": [
+            "DJ MKM",
+            "Night Driver"
+        ],
+        "flyer": "/flyers/2025-12-06-pr.JPG",
+        "notes": "BYOB",
+        "sortDate": "2025-11-08T19:00"
+    }
+]
