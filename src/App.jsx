@@ -509,10 +509,10 @@ export default function App() {
             )}
           </a>
           <nav className="flex items-center gap-5 text-sm">
-            <a href="#about" className="hover:text-red-400">About</a>
-            <a href="#book" className="hover:text-red-400">Book</a>
             <a href="#gallery" className="hover:text-red-400">Gallery</a>
             <a href="#shows" className="hover:text-red-400">Shows</a>
+            <a href="#about" className="hover:text-red-400">About</a>
+            <a href="#book" className="hover:text-red-400">Book</a>
             <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
                Contact
             </a>
