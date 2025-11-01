@@ -528,7 +528,7 @@ export default function App() {
         </div>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
           <p className="text-sm text-white/60">Jacksonville, Illinois • Weekends at Pizza Records</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">We Don’t Do Quiet.</h1>
+          <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">Get Off The Couch!!</h1>
           <p className="mt-4 max-w-2xl text-white/80">
             Full-service shows at Pizza Records and professional sound equipment rentals. Modern, sleek production by design.
           </p>
