@@ -546,7 +546,7 @@ export default function App() {
       {/* Gallery (directly under Hero) */}
       <section id="gallery" className="py-16 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Recent Events</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {GALLERY.map((g, i) => (
               <SafeImg key={g.jpg} jpg={g.jpg} webp={g.webp} alt={`Event photo ${i + 1}`} />
