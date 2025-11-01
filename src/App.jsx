@@ -1021,6 +1021,25 @@ export default function App() {
             </a>
           </div>
         </div>
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
+  <a
+    href="https://www.facebook.com/mkmentertainmentllc"
+    target="_blank"
+    rel="noreferrer"
+    className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
+  >
+    Follow MKM Entertainment on Facebook
+  </a>
+  <a
+    href="https://www.facebook.com/share/1D2UXPisWA/?mibextid=wwXlfr"
+    target="_blank"
+    rel="noreferrer"
+    className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
+  >
+    Follow Pizza Records on Facebook
+  </a>
+</div>
+
       </footer>
     </div>
   );
