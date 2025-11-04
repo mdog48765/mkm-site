@@ -12,7 +12,20 @@
         "flyer": "/flyers/2025-11-08-pr.jpg",
         "notes": "BYOB",
         "sortDate": "2025-11-08T19:00"
+    },
+    {
+        "id": "2025-11-22-hc",
+        "title": "Cold Nights and Hot Mics",
+        "dateText": "Friday, Nov. 22nd",
+        "timeText": "7PM-11PM",
+        "price": "$5",
+        "ages": "18+",
+        "lineup": [
+            "TBA"
+        ],
+        "flyer": "/flyers/2025-11-22-hc.jpg",
+        "notes": "Live music, photo booth, and refreshments. Open Mic 7-8PM, Performers 8-11PM",
+        "sortDate": "2025-11-22T21:00"
     }
-
 
 ]
