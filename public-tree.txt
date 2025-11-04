@@ -1,0 +1,36 @@
+﻿Folder PATH listing for volume Windows-SSD
+Volume serial number is 56FD-1356
+C:\USERS\MICHA\ONEDRIVE\DOCUMENTS\WEBSITE PROJECTS\MKM-SITE\PUBLIC
+ª   thumbnail_MKM Entertainment logo.png
+ª   vite.svg
+ª   
++---flyers
+ª       2025-11-08-pr.jpg
+ª       2025-11-22-hc.jpg
+ª       
++---gallery
+ª       event1.jpg
+ª       event1.webp
+ª       event2.jpg
+ª       event2.webp
+ª       event3.jpg
+ª       event3.webp
+ª       event4.jpg
+ª       event4.webp
+ª       event5.jpg
+ª       event5.webp
+ª       event6.jpg
+ª       event6.webp
+ª       
++---gallery-src
+ª       event1.jpeg
+ª       event2.JPG
+ª       event3.jpg
+ª       event4.JPG
+ª       event5.jpg
+ª       event6.JPG
+ª       
++---images
+        fallback.png
+        michael-mixing.jpg
+        
