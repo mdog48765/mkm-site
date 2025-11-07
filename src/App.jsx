@@ -1,4 +1,6 @@
-import React, { useMemo, useState, useEffect } from "react";
+
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import SnakeGame from "./components/SnakeGame.jsx";
 
 /* ===== Imports for dynamic content ===== */
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
@@ -22,7 +24,6 @@ const trim = (s) => (s || "").replace(/\s+/g, " ").trim();
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trim(s || ""));
 
 /* ===== Date helpers for shows ===== */
-// keeps your existing helper (safe parse YYYY-MM-DD) for future use
 function parseYMD(s) {
   if (!s || typeof s !== "string") return null;
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -123,29 +124,17 @@ function SafeImg({ jpg, webp, alt }) {
   );
 }
 
-/* ===== Upcoming & Past Shows (Pizza Records) =====
-   - Edit src/shows.json with strings like:
-     { "dateText": "Sat, Nov 9", "timeText": "Doors 7 PM • Music 8 PM", "sortDate": "2025-11-09T19:00", ... }
-   - `sortDate` should be ISO (YYYY-MM-DDTHH:mm) so we can auto-sort and move past shows.
-*/
+/* ===== Upcoming & Past Shows (Pizza Records) ===== */
 function UpcomingShows() {
-  // source data (guard for non-arrays)
   const shows = Array.isArray(SHOWS) ? SHOWS : [];
-
-  // start-of-today in local time
   const todayStart = startOfToday();
 
-  // keep only shows with a valid sortDate we can parse
   const valid = shows.filter(
     (s) => s && s.sortDate && !Number.isNaN(new Date(s.sortDate).getTime())
   );
-
-  // chronological sort (oldest -> newest)
   const sorted = [...valid].sort(
     (a, b) => new Date(a.sortDate) - new Date(b.sortDate)
   );
-
-  // split by today
   const upcoming = sorted.filter((s) => new Date(s.sortDate) >= todayStart);
 
   if (upcoming.length === 0) {
@@ -173,7 +162,7 @@ function UpcomingShows() {
             >
               {e.flyer ? (
                 <a
-                  href={e.flyer}
+                  href={e.ticketUrl || e.flyer} // prefer tickets if present
                   target="_blank"
                   rel="noreferrer"
                   className="block bg-black"
@@ -243,12 +232,9 @@ function UpcomingShows() {
 }
 
 function PastShows() {
-  // source data (guard)
   const shows = Array.isArray(SHOWS) ? SHOWS : [];
-
   const todayStart = startOfToday();
 
-  // valid + sort (newest first for past)
   const valid = shows.filter(
     (s) => s && s.sortDate && !Number.isNaN(new Date(s.sortDate).getTime())
   );
@@ -256,9 +242,7 @@ function PastShows() {
     (a, b) => new Date(b.sortDate) - new Date(a.sortDate)
   );
 
-  // past only
   const past = sorted.filter((s) => new Date(s.sortDate) < todayStart).slice(0, 12);
-
   if (past.length === 0) return null;
 
   return (
@@ -364,8 +348,8 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [errors, setErrors] = useState({}); // field-level errors
-  const [messagePreviewLen, setMessagePreviewLen] = useState(0); // live count
+  const [errors, setErrors] = useState({});
+  const [messagePreviewLen, setMessagePreviewLen] = useState(0);
 
   // Client throttle (60s)
   const [canSubmit, setCanSubmit] = useState(true);
@@ -495,13 +479,38 @@ export default function App() {
     setAddOns([]);
   }
 
+  /* ===== Easter Egg: 5 rapid clicks on logo opens Snake modal ===== */
+  const [showGame, setShowGame] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
+  const clickTimerRef = useRef(null);
+
+  function onLogoClick(e) {
+    // prevent default anchor jump while counting clicks
+    e.preventDefault();
+    setLogoClicks((n) => {
+      const next = n + 1;
+      if (next === 1) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = setTimeout(() => setLogoClicks(0), 3000); // 3s window
+      }
+      if (next >= 5) {
+        clearTimeout(clickTimerRef.current);
+        setLogoClicks(0);
+        setShowGame(true);
+      }
+      return next;
+    });
+  }
+
   /* ===== UI ===== */
+  
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
         <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <a href="#home" className="flex items-center gap-3">
+          <a href="#home" onClick={onLogoClick} className="flex items-center gap-3">
             {logoBroken ? (
               <div className="h-20 w-20 rounded bg-red-600" aria-label="MKM Logo" />
             ) : (
@@ -548,7 +557,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Gallery (directly under Hero) */}
+      {/* Gallery */}
       <section id="gallery" className="py-16 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
@@ -1044,8 +1053,31 @@ export default function App() {
             Follow Pizza Records on Facebook
           </a>
         </div>
-
       </footer>
+
+      {/* === Hidden Snake Game Modal (Easter Egg) === */}
+      {showGame && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 p-3">
+              <h3 className="text-lg font-semibold">Snake — MKM Edition</h3>
+              <button
+                onClick={() => setShowGame(false)}
+                className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4">
+              <SnakeGame />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
