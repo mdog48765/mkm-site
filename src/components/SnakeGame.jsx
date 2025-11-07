@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-//v1.0.9
-/* ========= High score (local, persistent) ========= */
+
+/* ===== Local, persistent high score (no backend) ===== */
 const HI_KEY = "mkm-snake-hi";
 function loadHigh() {
   try { const v = localStorage.getItem(HI_KEY); return v ? Math.max(0, Number(v)) : 0; }
@@ -10,8 +10,8 @@ function saveHigh(score) {
   try { localStorage.setItem(HI_KEY, String(score)); } catch {}
 }
 
-/* ========= Speed curve =========
-   Starts ~180ms, speeds up gently every 4 apples, floors at 75ms */
+/* ===== Gentle speed curve =====
+   Starts ~180ms, speeds up every 4 apples, floors at 75ms */
 function speedFor(score) {
   const BASE = 180, MIN = 75;
   const level = Math.floor(Math.max(0, score) / 4);
@@ -19,7 +19,7 @@ function speedFor(score) {
   return Math.max(MIN, Math.round(interval));
 }
 
-/* ========= One-shot timer clock that can change interval without stacking ========= */
+/* ===== One-shot timer clock (no stacking setIntervals) ===== */
 class GameClock {
   constructor(stepFn, intervalMs = 180) {
     this.stepFn = stepFn;
@@ -51,50 +51,9 @@ class GameClock {
   }
 }
 
-/* ========= Touch helpers (swipe + D-pad buttons) ========= */
-function attachTouchControls(root, onDirection) {
-  if (!root) return () => {};
-  let startX = 0, startY = 0, active = false;
-
-  const onStart = (e) => {
-    active = true;
-    const t = e.touches ? e.touches[0] : e;
-    startX = t.clientX; startY = t.clientY;
-    e.preventDefault();
-  };
-  const onMove = (e) => {
-    if (!active) return;
-    const t = e.touches ? e.touches[0] : e;
-    const dx = t.clientX - startX, dy = t.clientY - startY;
-    if (Math.abs(dx) > 18 || Math.abs(dy) > 18) {
-      if (Math.abs(dx) > Math.abs(dy)) onDirection(dx > 0 ? "right" : "left");
-      else onDirection(dy > 0 ? "down" : "up");
-      active = false;
-    }
-    e.preventDefault();
-  };
-  const onEnd = (e) => { active = false; e.preventDefault(); };
-
-  root.addEventListener("touchstart", onStart, { passive: false });
-  root.addEventListener("touchmove", onMove, { passive: false });
-  root.addEventListener("touchend", onEnd, { passive: false });
-  root.addEventListener("touchcancel", onEnd, { passive: false });
-
-  root.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-dir]");
-    if (btn) onDirection(btn.getAttribute("data-dir"));
-  });
-
-  return () => {
-    root.removeEventListener("touchstart", onStart);
-    root.removeEventListener("touchmove", onMove);
-    root.removeEventListener("touchend", onEnd);
-    root.removeEventListener("touchcancel", onEnd);
-  };
-}
-
-/* ========= Canvas fit to CSS size (DPR aware + visualViewport) ========= */
+/* ===== DPR-fit canvas to its CSS size (no body/class hacks) ===== */
 function fitCanvas(canvas) {
+  if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width * dpr));
@@ -104,50 +63,47 @@ function fitCanvas(canvas) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-/* ========= Main component ========= */
 export default function SnakeGame() {
+  const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const clockRef  = useRef(null);
+
   const [score, setScore] = useState(0);
   const [high, setHigh]   = useState(0);
   const [running, setRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const dirRef = useRef("right");     // current direction
-  const pendingDirRef = useRef(null); // buffer to prevent instant backtracking
-  const stateRef = useRef(null);      // game state (snake, food, grid)
 
-  /* ====== Init / viewport & scroll lock ====== */
+  // direction refs
+  const dirRef = useRef("right");
+  const pendingDirRef = useRef(null);
+
+  // game state ref
+  const stateRef = useRef(null);
+
+  /* === init === */
   useEffect(() => {
     setHigh(loadHigh());
+
     const canvas = canvasRef.current;
     const onResize = () => fitCanvas(canvas);
-    const vv = window.visualViewport;
     onResize();
+
     window.addEventListener("resize", onResize);
+    const vv = window.visualViewport;
     vv && vv.addEventListener("resize", onResize);
 
-    // Lock page scrolling while game visible
-    document.body.classList.add("game-locked");
-    const stop = (e) => e.preventDefault();
-    document.addEventListener("touchmove", stop, { passive: false });
+    // welcome screen
+    drawWelcome();
 
     return () => {
       window.removeEventListener("resize", onResize);
       vv && vv.removeEventListener("resize", onResize);
-      document.body.classList.remove("game-locked");
-      document.removeEventListener("touchmove", stop);
+      clockRef.current?.stop();
     };
-  }, []);
-
-  /* ====== Touch controls ====== */
-  useEffect(() => {
-    const root = document.getElementById("game-root");
-    const detach = attachTouchControls(root, (d) => queueDir(d));
-    return () => detach();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ====== Keyboard ====== */
+  /* === keyboard === */
   useEffect(() => {
     const onKey = (e) => {
       const k = e.key.toLowerCase();
@@ -159,12 +115,54 @@ export default function SnakeGame() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
-  /* ====== Helpers ====== */
+  /* === touch (only inside the game wrapper; no document/body hooks) === */
+  useEffect(() => {
+    const root = wrapRef.current;
+    if (!root) return;
+    let startX = 0, startY = 0, active = false;
+
+    const onStart = (e) => {
+      active = true;
+      const t = e.touches ? e.touches[0] : e;
+      startX = t.clientX; startY = t.clientY;
+      // prevent only inside the wrapper
+      e.preventDefault();
+    };
+    const onMove = (e) => {
+      if (!active) return;
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - startX, dy = t.clientY - startY;
+      if (Math.abs(dx) > 18 || Math.abs(dy) > 18) {
+        if (Math.abs(dx) > Math.abs(dy)) queueDir(dx > 0 ? "right" : "left");
+        else queueDir(dy > 0 ? "down" : "up");
+        active = false;
+      }
+      e.preventDefault();
+    };
+    const onEnd = (e) => { active = false; e.preventDefault(); };
+
+    root.addEventListener("touchstart", onStart, { passive: false });
+    root.addEventListener("touchmove", onMove, { passive: false });
+    root.addEventListener("touchend", onEnd, { passive: false });
+    root.addEventListener("touchcancel", onEnd, { passive: false });
+
+    return () => {
+      root.removeEventListener("touchstart", onStart);
+      root.removeEventListener("touchmove", onMove);
+      root.removeEventListener("touchend", onEnd);
+      root.removeEventListener("touchcancel", onEnd);
+    };
+  }, []);
+
+  /* === speed adjust when score changes === */
+  useEffect(() => {
+    clockRef.current?.setInterval(speedFor(score));
+  }, [score]);
+
+  /* === helpers === */
   const queueDir = (d) => {
-    // prevent 180° turns
     const cur = dirRef.current;
     if ((cur === "up" && d === "down") || (cur === "down" && d === "up") ||
         (cur === "left" && d === "right") || (cur === "right" && d === "left")) return;
@@ -184,59 +182,38 @@ export default function SnakeGame() {
       cell, cols, rows,
       snake: [start, { x: start.x - 1, y: start.y }, { x: start.x - 2, y: start.y }],
       food: spawnFood(cols, rows, new Set()),
-      grow: 0,
     };
     dirRef.current = "right";
     pendingDirRef.current = null;
     setScore(0);
     setGameOver(false);
+    draw(); // first frame
   }, []);
 
-  const spawnFood = (cols, rows, occupiedSet) => {
+  const spawnFood = (cols, rows, occupied) => {
     while (true) {
       const x = (Math.random() * cols) | 0;
       const y = (Math.random() * rows) | 0;
       const key = x + "," + y;
-      if (!occupiedSet.has(key)) return { x, y };
+      if (!occupied.has(key)) return { x, y };
     }
   };
 
-  const draw = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const S = stateRef.current;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // background grid (subtle)
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "#0B1220";
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-    // snake
-    ctx.fillStyle = "#22d3ee";
-    for (const p of S.snake) {
-      ctx.fillRect(p.x * S.cell, p.y * S.cell, S.cell - 1, S.cell - 1);
-    }
-    // food
-    ctx.fillStyle = "#f97316";
-    ctx.fillRect(S.food.x * S.cell, S.food.y * S.cell, S.cell - 1, S.cell - 1);
-
-    // HUD
-    ctx.fillStyle = "#e2e8f0";
-    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-    ctx.fillText(`Score: ${score}  Hi: ${high}`, 8, 18);
-    if (gameOver) {
-      const msg = "Game Over • Tap Start";
-      ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-      const m = ctx.measureText(msg);
-      ctx.fillText(msg, (canvas.clientWidth - m.width) / 2, 36);
-    }
-  };
+  const endGame = useCallback(() => {
+    clockRef.current?.stop();
+    setRunning(false);
+    setGameOver(true);
+    setHigh(h => {
+      const next = score > h ? score : h;
+      if (score > h) saveHigh(score);
+      return next;
+    });
+  }, [score]);
 
   const step = () => {
     const S = stateRef.current;
     if (!S) return;
-    // commit any queued direction once per tick
+
     if (pendingDirRef.current) {
       dirRef.current = pendingDirRef.current;
       pendingDirRef.current = null;
@@ -248,32 +225,76 @@ export default function SnakeGame() {
     else if (dirRef.current === "left") head.x -= 1;
     else head.x += 1;
 
-    // wall-kill only (no wrap)
+    // wall-kill only
     if (head.x < 0 || head.y < 0 || head.x >= S.cols || head.y >= S.rows) {
-      endGame();
-      return;
+      endGame(); return;
     }
-
     // self collision
     for (const p of S.snake) {
-      if (p.x === head.x && p.y === head.y) {
-        endGame();
-        return;
-      }
+      if (p.x === head.x && p.y === head.y) { endGame(); return; }
     }
 
     S.snake.unshift(head);
+
     // food?
     if (head.x === S.food.x && head.y === S.food.y) {
       setScore(s => s + 1);
-      // mark occupied cells to spawn outside snake
       const occ = new Set(S.snake.map(p => p.x + "," + p.y));
       S.food = spawnFood(S.cols, S.rows, occ);
-      // grow by 1 (i.e., do not pop tail this tick)
+      // don't pop tail this tick (grow by 1)
     } else {
       S.snake.pop();
     }
+
     draw();
+  };
+
+  const draw = () => {
+    const canvas = canvasRef.current;
+    fitCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+    const S = stateRef.current;
+
+    // bg
+    ctx.fillStyle = "#0B1220";
+    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+    if (!S) return;
+
+    // snake
+    ctx.fillStyle = "#22d3ee";
+    for (const p of S.snake) {
+      ctx.fillRect(p.x * S.cell, p.y * S.cell, S.cell - 1, S.cell - 1);
+    }
+
+    // food
+    ctx.fillStyle = "#f97316";
+    ctx.fillRect(S.food.x * S.cell, S.food.y * S.cell, S.cell - 1, S.cell - 1);
+
+    // HUD
+    ctx.fillStyle = "#e2e8f0";
+    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.fillText(`Score: ${score}  Hi: ${high}`, 8, 18);
+
+    if (gameOver) {
+      const msg = "Game Over — Press Start";
+      ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      const m = ctx.measureText(msg);
+      ctx.fillText(msg, (canvas.clientWidth - m.width) / 2, 36);
+    }
+  };
+
+  const drawWelcome = () => {
+    const canvas = canvasRef.current;
+    fitCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#0B1220";
+    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.fillStyle = "#e2e8f0";
+    ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    const msg = "Snake — Press Start";
+    const m = ctx.measureText(msg);
+    ctx.fillText(msg, (canvas.clientWidth - m.width) / 2, 36);
   };
 
   const startGame = useCallback(() => {
@@ -297,69 +318,33 @@ export default function SnakeGame() {
     draw();
   }, [newGame, pauseGame]);
 
-  const endGame = useCallback(() => {
-    clockRef.current?.stop();
-    setRunning(false);
-    setGameOver(true);
-    setHigh(h => {
-      const next = score > h ? score : h;
-      if (score > h) saveHigh(score);
-      return next;
-    });
-  }, [score]);
-
-  /* adjust speed when score changes */
-  useEffect(() => {
-    clockRef.current?.setInterval(speedFor(score));
-  }, [score]);
-
-  /* initial canvas draw */
-  useEffect(() => {
-    // ensure canvas fits whenever mounted
-    fitCanvas(canvasRef.current);
-    // draw a welcome screen
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.fillStyle = "#0B1220";
-    ctx.fillRect(0, 0, canvasRef.current.clientWidth, canvasRef.current.clientHeight);
-    ctx.fillStyle = "#e2e8f0";
-    ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-    const msg = "Snake • Tap Start";
-    const m = ctx.measureText(msg);
-    ctx.fillText(msg, (canvasRef.current.clientWidth - m.width) / 2, 36);
-  }, []);
+  /* redraw when score/over change (ensures HUD always updates) */
+  useEffect(() => { draw(); }, [score, high, gameOver]);
 
   return (
-    <div id="game-root">
-      <div className="game-wrap bg-[#0F172A] text-white rounded-lg mx-auto">
-        {/* Top bar */}
-        <div className="w-full flex flex-wrap items-center justify-between gap-2">
-          <div className="opacity-80 text-sm">Arrow keys / WASD • Swipe on mobile</div>
-          <div className="flex gap-2">
-            <button className="ctl-btn px-4 py-2 bg-slate-700" onClick={startGame}>Start</button>
-            <button className="ctl-btn px-4 py-2 bg-slate-700" onClick={resetGame}>Reset</button>
-            <span className="text-sm opacity-80 select-none">Score: {score} • Hi: {high}</span>
-          </div>
+    <div ref={wrapRef} className="mx-auto max-w-[900px] w-[92vw]">
+      <div className="flex items-center justify-between gap-2 py-2">
+        <div className="opacity-80 text-sm select-none">Arrow keys / WASD • Swipe inside the game</div>
+        <div className="flex gap-2">
+          <button className="px-4 py-2 rounded bg-slate-700 text-white" onClick={startGame}>Start</button>
+          <button className="px-4 py-2 rounded bg-slate-700 text-white" onClick={resetGame}>Reset</button>
         </div>
+      </div>
 
-        {/* Main area */}
-        <div className="flex-1 w-full flex gap-4 items-center justify-center">
-          <div className="board-shell">
-            <canvas id="game-canvas" ref={canvasRef} className="block w-full h-full" />
-          </div>
-          <div className="controls-column">{/* optional landscape-only extras */}</div>
-        </div>
-
-        {/* Portrait D-pad */}
-        <div className="portrait-only flex flex-col items-center gap-3 pt-1">
+      {/* The board: fixed aspect so it doesn’t jump around */}
+      <div className="relative w-full" style={{ aspectRatio: "16/11", background: "#0B1220", borderRadius: 12, overflow: "hidden" }}>
+        <canvas ref={canvasRef} className="block w-full h-full" />
+        {/* Simple D-pad for touch (inside wrapper only) */}
+        <div className="absolute inset-x-0 bottom-2 flex justify-center pointer-events-auto select-none">
           <div className="grid grid-cols-3 gap-2">
             <div />
-            <button className="dpad-btn bg-slate-700" data-dir="up">▲</button>
+            <button className="px-4 py-3 rounded bg-slate-700 text-white" onClick={() => queueDir("up")}>▲</button>
             <div />
-            <button className="dpad-btn bg-slate-700" data-dir="left">◀︎</button>
+            <button className="px-4 py-3 rounded bg-slate-700 text-white" onClick={() => queueDir("left")}>◀︎</button>
             <div />
-            <button className="dpad-btn bg-slate-700" data-dir="right">▶︎</button>
+            <button className="px-4 py-3 rounded bg-slate-700 text-white" onClick={() => queueDir("right")}>▶︎</button>
             <div />
-            <button className="dpad-btn bg-slate-700 col-start-2" data-dir="down">▼</button>
+            <button className="px-4 py-3 rounded bg-slate-700 text-white col-start-2" onClick={() => queueDir("down")}>▼</button>
           </div>
         </div>
       </div>
