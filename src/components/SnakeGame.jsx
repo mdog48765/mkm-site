@@ -1,5 +1,5 @@
 // src/components/SnakeGame.jsx
-// V1.2 
+//V1.0.7
 import React, { useEffect, useRef, useState } from "react";
 
 const BASE_CELL = 22;
@@ -35,10 +35,10 @@ export default function SnakeGame() {
   // Grid
   const gridRef = useRef({ cols: 24, rows: 16, cell: BASE_CELL });
 
-  // Touch tracking
+  // Touch tracking (canvas swipes)
   const swipeRef = useRef({ x: 0, y: 0, active: false });
 
-  // --- Body scroll lock helpers (for iOS too) ---
+  // --- Body scroll lock ---
   function lockBodyScroll(lock) {
     const b = document.body;
     const html = document.documentElement;
@@ -169,53 +169,36 @@ export default function SnakeGame() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Swipe (touch) — pure cardinal + prevent page scroll
-  function onTouchStart(e) {
-    e.preventDefault();          // stop page from starting a scroll
+  // Swipe on CANVAS ONLY — cardinal + scroll lock
+  function onCanvasTouchStart(e) {
+    e.preventDefault();
     lockBodyScroll(true);
     const t = e.touches[0];
     swipeRef.current = { x: t.clientX, y: t.clientY, active: true };
   }
-  function onTouchMove(e) {
+  function onCanvasTouchMove(e) {
     if (!swipeRef.current.active) return;
-    e.preventDefault();          // keep the page locked while swiping on the game
+    e.preventDefault();
     const t = e.touches[0];
     const dx = t.clientX - swipeRef.current.x;
     const dy = t.clientY - swipeRef.current.y;
     const absx = Math.abs(dx), absy = Math.abs(dy);
-
-    // require a clear dominant direction (no diagonals)
     const THRESH = 24;
     if (absx < THRESH && absy < THRESH) return;
 
     let nx = nextDirRef.current.x, ny = nextDirRef.current.y;
-    if (absx > absy) {
-      nx = dx > 0 ? 1 : -1; ny = 0;      // horizontal only
-    } else {
-      ny = dy > 0 ? 1 : -1; nx = 0;      // vertical only
-    }
+    if (absx > absy) { nx = dx > 0 ? 1 : -1; ny = 0; }
+    else { ny = dy > 0 ? 1 : -1; nx = 0; }
 
     const cur = dirRef.current;
-    if (!(nx === -cur.x && ny === -cur.y)) {
-      nextDirRef.current = { x: nx, y: ny };
-    }
-
-    swipeRef.current.active = false;     // one move per swipe
+    if (!(nx === -cur.x && ny === -cur.y)) nextDirRef.current = { x: nx, y: ny };
+    swipeRef.current.active = false;
     if (!runningRef.current) { ensureAudio(); start(); }
   }
-  function onTouchEnd(e) {
+  function onCanvasTouchEnd(e) {
     e.preventDefault();
     swipeRef.current.active = false;
     lockBodyScroll(false);
-  }
-  function onTouchCancel() {
-    swipeRef.current.active = false;
-    lockBodyScroll(false);
-  }
-
-  // Prevent scroll via wheel/trackpad while focused on the game container (desktop)
-  function onWheel(e) {
-    e.preventDefault();
   }
 
   // Controls
@@ -265,12 +248,8 @@ export default function SnakeGame() {
     const snake = snakeRef.current.slice();
     const head = { x: snake[0].x + dirRef.current.x, y: snake[0].y + dirRef.current.y };
 
-    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) {
-      sfxCrash(); reset(); return;
-    }
-    if (snake.some(s => s.x === head.x && s.y === head.y)) {
-      sfxCrash(); reset(); return;
-    }
+    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) { sfxCrash(); reset(); return; }
+    if (snake.some(s => s.x === head.x && s.y === head.y)) { sfxCrash(); reset(); return; }
 
     snake.unshift(head);
 
@@ -352,6 +331,7 @@ export default function SnakeGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // D-pad helper
   const setDir = (x, y) => {
     const cur = dirRef.current;
     if (x === -cur.x && y === -cur.y) return;
@@ -359,72 +339,94 @@ export default function SnakeGame() {
     if (!runningRef.current) { ensureAudio(); start(); }
   };
 
+  // D-pad press handlers (no preventDefault so clicks fire)
+  const onPadDown = (x, y) => () => { lockBodyScroll(true); setDir(x, y); };
+  const onPadUp = () => { lockBodyScroll(false); };
+
   return (
     <div
       ref={wrapRef}
-      className="w-full focus:outline-none select-none touch-none overscroll-none"
-      style={{ touchAction: "none", overscrollBehavior: "none" }}
+      className="w-full focus:outline-none select-none"
       tabIndex={0}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
-      onWheel={onWheel}
     >
       <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl">
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-1">
           <div className="text-sm text-slate-300">Arrow keys / WASD • Swipe on mobile</div>
           <div className="flex items-center flex-wrap gap-2">
-            <button onClick={() => (ensureAudio(), toggle())} className="rounded-lg bg-blue-600 px-3 py-2 text-white hover:bg-blue-700">
+            <button onClick={() => (ensureAudio(), toggle())} className="rounded-lg bg-blue-600 px-3 py-2 text-white hover:bg-blue-700" type="button">
               {running ? "Pause" : "Start"}
             </button>
-            <button onClick={reset} className="rounded-lg bg-slate-700 px-3 py-2 text-white hover:bg-slate-600">
+            <button onClick={reset} className="rounded-lg bg-slate-700 px-3 py-2 text-white hover:bg-slate-600" type="button">
               Reset
             </button>
             <button
               onClick={() => setSoundOn(v => !v)}
               className="rounded-lg bg-slate-700 px-3 py-2 text-white hover:bg-slate-600"
               title={soundOn ? "Sound: On" : "Sound: Off"}
+              type="button"
             >
               {soundOn ? "Sound: On" : "Sound: Off"}
             </button>
           </div>
         </div>
 
-        {/* Canvas */}
+        {/* Canvas (touch handled here, not on wrapper) */}
         <div className="mt-2 flex justify-center">
-          <canvas ref={canvasRef} className="rounded-xl border border-white/10" />
+          <canvas
+            ref={canvasRef}
+            className="rounded-xl border border-white/10 touch-none"
+            style={{ touchAction: "none" }}
+            onTouchStart={onCanvasTouchStart}
+            onTouchMove={onCanvasTouchMove}
+            onTouchEnd={onCanvasTouchEnd}
+          />
         </div>
 
-        {/* Mobile D-pad — big & close */}
+        {/* Mobile D-pad — big & close; uses pointer + touch, no preventDefault */}
         <div className="mt-3 grid grid-cols-3 place-items-center gap-1.5 sm:hidden">
           <span />
           <button
-            onClick={() => setDir(0, -1)}
+            type="button"
+            onPointerDown={onPadDown(0, -1)}
+            onPointerUp={onPadUp}
+            onTouchStart={onPadDown(0, -1)}
+            onTouchEnd={onPadUp}
             className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Up"
           >▲</button>
           <span />
           <button
-            onClick={() => setDir(-1, 0)}
+            type="button"
+            onPointerDown={onPadDown(-1, 0)}
+            onPointerUp={onPadUp}
+            onTouchStart={onPadDown(-1, 0)}
+            onTouchEnd={onPadUp}
             className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Left"
           >◀</button>
           <button
-            onClick={() => setDir(0, 1)}
+            type="button"
+            onPointerDown={onPadDown(0, 1)}
+            onPointerUp={onPadUp}
+            onTouchStart={onPadDown(0, 1)}
+            onTouchEnd={onPadUp}
             className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Down"
           >▼</button>
           <button
-            onClick={() => setDir(1, 0)}
+            type="button"
+            onPointerDown={onPadDown(1, 0)}
+            onPointerUp={onPadUp}
+            onTouchStart={onPadDown(1, 0)}
+            onTouchEnd={onPadUp}
             className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Right"
           >▶</button>
         </div>
 
         <div className="mt-2 text-center text-sm text-slate-400">
-          Eat the MKM logos. Space/Enter to Start/Pause. Walls are deadly. Swipe won’t scroll the page.
+          Eat the MKM logos. Space/Enter to Start/Pause. Walls are deadly.
         </div>
       </div>
     </div>
