@@ -1,4 +1,5 @@
 // src/components/SnakeGame.jsx
+// V1.2 
 import React, { useEffect, useRef, useState } from "react";
 
 const BASE_CELL = 22;
@@ -28,14 +29,42 @@ export default function SnakeGame() {
   const [running, setRunning] = useState(false);
   const [hi, setHi] = useState(() => Number(localStorage.getItem("mkm_hi") || 0));
   const [soundOn, setSoundOn] = useState(true);
-  const soundOnRef = useRef(true);                 // keeps toggle in sync for interval callbacks
+  const soundOnRef = useRef(true);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
 
   // Grid
   const gridRef = useRef({ cols: 24, rows: 16, cell: BASE_CELL });
 
-  // Touch
+  // Touch tracking
   const swipeRef = useRef({ x: 0, y: 0, active: false });
+
+  // --- Body scroll lock helpers (for iOS too) ---
+  function lockBodyScroll(lock) {
+    const b = document.body;
+    const html = document.documentElement;
+    if (lock) {
+      const scrollY = window.scrollY;
+      b.dataset.scrollY = String(scrollY);
+      b.style.position = "fixed";
+      b.style.top = `-${scrollY}px`;
+      b.style.left = "0";
+      b.style.right = "0";
+      b.style.width = "100%";
+      b.style.overflow = "hidden";
+      html.style.overscrollBehavior = "none";
+    } else {
+      const scrollY = Number(document.body.dataset.scrollY || "0");
+      b.style.position = "";
+      b.style.top = "";
+      b.style.left = "";
+      b.style.right = "";
+      b.style.width = "";
+      b.style.overflow = "";
+      document.documentElement.style.overscrollBehavior = "";
+      window.scrollTo(0, scrollY);
+      delete b.dataset.scrollY;
+    }
+  }
 
   // --- Audio ---
   const audioRef = useRef(null);
@@ -106,7 +135,7 @@ export default function SnakeGame() {
     const ro = new ResizeObserver(resizeCanvas);
     wrapRef.current && ro.observe(wrapRef.current);
     window.addEventListener("resize", resizeCanvas);
-    setTimeout(() => wrapRef.current?.focus(), 0);            // keyboard ready
+    setTimeout(() => wrapRef.current?.focus(), 0);
 
     const onVis = () => { if (document.hidden) pause(); };
     document.addEventListener("visibilitychange", onVis);
@@ -140,29 +169,54 @@ export default function SnakeGame() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Swipe
+  // Swipe (touch) — pure cardinal + prevent page scroll
   function onTouchStart(e) {
+    e.preventDefault();          // stop page from starting a scroll
+    lockBodyScroll(true);
     const t = e.touches[0];
     swipeRef.current = { x: t.clientX, y: t.clientY, active: true };
   }
   function onTouchMove(e) {
     if (!swipeRef.current.active) return;
+    e.preventDefault();          // keep the page locked while swiping on the game
     const t = e.touches[0];
     const dx = t.clientX - swipeRef.current.x;
     const dy = t.clientY - swipeRef.current.y;
     const absx = Math.abs(dx), absy = Math.abs(dy);
-    if (absx < 24 && absy < 24) return;
-    let nx = nextDirRef.current.x, ny = nextDirRef.current.y;
 
-    if (absx > absy) nx = dx > 0 ? 1 : -1;
-    else ny = dy > 0 ? 1 : -1;
+    // require a clear dominant direction (no diagonals)
+    const THRESH = 24;
+    if (absx < THRESH && absy < THRESH) return;
+
+    let nx = nextDirRef.current.x, ny = nextDirRef.current.y;
+    if (absx > absy) {
+      nx = dx > 0 ? 1 : -1; ny = 0;      // horizontal only
+    } else {
+      ny = dy > 0 ? 1 : -1; nx = 0;      // vertical only
+    }
 
     const cur = dirRef.current;
-    if (!(nx === -cur.x && ny === -cur.y)) nextDirRef.current = { x: nx, y: ny };
-    swipeRef.current.active = false;
+    if (!(nx === -cur.x && ny === -cur.y)) {
+      nextDirRef.current = { x: nx, y: ny };
+    }
+
+    swipeRef.current.active = false;     // one move per swipe
     if (!runningRef.current) { ensureAudio(); start(); }
   }
-  function onTouchEnd() { swipeRef.current.active = false; }
+  function onTouchEnd(e) {
+    e.preventDefault();
+    swipeRef.current.active = false;
+    lockBodyScroll(false);
+  }
+  function onTouchCancel() {
+    swipeRef.current.active = false;
+    lockBodyScroll(false);
+  }
+
+  // Prevent scroll via wheel/trackpad while focused on the game container (desktop)
+  function onWheel(e) {
+    e.preventDefault();
+  }
 
   // Controls
   function start() {
@@ -204,26 +258,22 @@ export default function SnakeGame() {
     }
   }
 
-  // Tick — WALL KILL ONLY
+  // Tick — wall kill only
   function tick() {
     dirRef.current = nextDirRef.current;
     const { cols, rows } = gridRef.current;
     const snake = snakeRef.current.slice();
     const head = { x: snake[0].x + dirRef.current.x, y: snake[0].y + dirRef.current.y };
 
-    // solid walls
     if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) {
       sfxCrash(); reset(); return;
     }
-
-    // self collision
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
       sfxCrash(); reset(); return;
     }
 
     snake.unshift(head);
 
-    // eat?
     if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
       scoreRef.current += 1; setScore(scoreRef.current);
       if (scoreRef.current > hi) { setHi(scoreRef.current); localStorage.setItem("mkm_hi", String(scoreRef.current)); }
@@ -245,22 +295,18 @@ export default function SnakeGame() {
     const ctx = canvas.getContext("2d");
     const { cols, rows, cell } = gridRef.current;
 
-    // bg
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const grad = ctx.createLinearGradient(0, 0, 0, rows * cell + PADDING * 2);
     grad.addColorStop(0, "#0b0f1a"); grad.addColorStop(1, "#0a0a0a");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // field
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.fillRect(PADDING, PADDING, cols * cell, rows * cell);
 
-    // subtle grid
     ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 1;
     for (let x = 0; x <= cols; x++) { const px = PADDING + x * cell; ctx.beginPath(); ctx.moveTo(px, PADDING); ctx.lineTo(px, PADDING + rows * cell); ctx.stroke(); }
     for (let y = 0; y <= rows; y++) { const py = PADDING + y * cell; ctx.beginPath(); ctx.moveTo(PADDING, py); ctx.lineTo(PADDING + cols * cell, py); ctx.stroke(); }
 
-    // snake
     const snake = snakeRef.current;
     snake.forEach((seg, i) => {
       const px = PADDING + seg.x * cell, py = PADDING + seg.y * cell;
@@ -281,7 +327,6 @@ export default function SnakeGame() {
       ctx.restore();
     });
 
-    // food (MKM logo)
     const f = foodRef.current; const fx = PADDING + f.x * cell; const fy = PADDING + f.y * cell;
     const pad = Math.max(3, Math.floor(cell * 0.14));
     const img = imgRef.current;
@@ -290,7 +335,6 @@ export default function SnakeGame() {
     else { ctx.fillStyle = "#ffffff"; roundRect(ctx, fx + pad, fy + pad, cell - pad * 2, cell - pad * 2, 6); ctx.fill(); }
     ctx.restore();
 
-    // HUD
     ctx.fillStyle = "#cbd5e1";
     ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.fillText(`Score: ${scoreRef.current}  Hi: ${hi}`, PADDING, 18);
@@ -304,11 +348,10 @@ export default function SnakeGame() {
 
   useEffect(() => {
     reset(); draw();
-    return () => { clearInterval(tickTimerRef.current); cancelAnimationFrame(rafRef.current); };
+    return () => { clearInterval(tickTimerRef.current); cancelAnimationFrame(rafRef.current); lockBodyScroll(false); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // D-pad helper
   const setDir = (x, y) => {
     const cur = dirRef.current;
     if (x === -cur.x && y === -cur.y) return;
@@ -319,11 +362,14 @@ export default function SnakeGame() {
   return (
     <div
       ref={wrapRef}
-      className="w-full focus:outline-none"
+      className="w-full focus:outline-none select-none touch-none overscroll-none"
+      style={{ touchAction: "none", overscrollBehavior: "none" }}
       tabIndex={0}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+      onWheel={onWheel}
     >
       <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl">
         {/* Controls */}
@@ -351,34 +397,34 @@ export default function SnakeGame() {
           <canvas ref={canvasRef} className="rounded-xl border border-white/10" />
         </div>
 
-        {/* Mobile D-pad — BIGGER + CLOSER */}
-        <div className="mt-3 grid grid-cols-3 place-items-center gap-1.5 sm:hidden select-none">
+        {/* Mobile D-pad — big & close */}
+        <div className="mt-3 grid grid-cols-3 place-items-center gap-1.5 sm:hidden">
           <span />
           <button
             onClick={() => setDir(0, -1)}
-            className="rounded-xl bg-slate-700 px-7 py-7 text-white text-2xl active:scale-95"
+            className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Up"
           >▲</button>
           <span />
           <button
             onClick={() => setDir(-1, 0)}
-            className="rounded-xl bg-slate-700 px-7 py-7 text-white text-2xl active:scale-95"
+            className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Left"
           >◀</button>
           <button
             onClick={() => setDir(0, 1)}
-            className="rounded-xl bg-slate-700 px-7 py-7 text-white text-2xl active:scale-95"
+            className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Down"
           >▼</button>
           <button
             onClick={() => setDir(1, 0)}
-            className="rounded-xl bg-slate-700 px-7 py-7 text-white text-2xl active:scale-95"
+            className="rounded-xl bg-slate-700 px-8 py-8 text-white text-3xl active:scale-95"
             aria-label="Right"
           >▶</button>
         </div>
 
         <div className="mt-2 text-center text-sm text-slate-400">
-          Eat the MKM logos. Space/Enter to Start/Pause. Walls are deadly.
+          Eat the MKM logos. Space/Enter to Start/Pause. Walls are deadly. Swipe won’t scroll the page.
         </div>
       </div>
     </div>
