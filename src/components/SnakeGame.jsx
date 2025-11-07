@@ -1,7 +1,10 @@
 // src/components/SnakeGame.jsx
-//V1.0.7
+//v1.0.8
 import React, { useEffect, useRef, useState } from "react";
 
+const COLS      = 24;   // fixed columns (stable feel)
+const ROWS_POR  = 16;   // portrait rows
+const ROWS_LAND = 14;   // landscape rows (a bit shorter so UI fits)
 const BASE_CELL = 22;
 const INIT_SPEED = 135;
 const MIN_SPEED  = 70;
@@ -32,13 +35,13 @@ export default function SnakeGame() {
   const soundOnRef = useRef(true);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
 
-  // Grid
-  const gridRef = useRef({ cols: 24, rows: 16, cell: BASE_CELL });
+  // Grid descriptor (recomputed on resize/orientation)
+  const gridRef = useRef({ cols: COLS, rows: ROWS_POR, cell: BASE_CELL });
 
   // Touch tracking (canvas swipes)
   const swipeRef = useRef({ x: 0, y: 0, active: false });
 
-  // --- Body scroll lock ---
+  // Body scroll lock (iOS-safe)
   function lockBodyScroll(lock) {
     const b = document.body;
     const html = document.documentElement;
@@ -100,25 +103,41 @@ export default function SnakeGame() {
     imgRef.current = img;
   }, []);
 
-  // Canvas sizing
+  // Canvas sizing — fit to viewport & keep controls visible
   function resizeCanvas() {
     const wrap = wrapRef.current, canvas = canvasRef.current;
     if (!wrap || !canvas) return;
 
+    const isLandscape = window.innerWidth > window.innerHeight;
+    // Reserve some space in the card for: header controls + D-pad + margins
+    const reserve = isLandscape ? 170 : 240; // px reserved inside the card
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const cssW = Math.max(300, wrap.clientWidth);
-    const cssH = Math.max(260, Math.floor(cssW * 0.66));
 
-    const cols = Math.floor((cssW - PADDING * 2) / BASE_CELL);
-    const rows = Math.floor((cssH - (PADDING + 4) * 2) / BASE_CELL);
-    const cell = Math.floor(Math.min(
-      (cssW - PADDING * 2) / cols,
-      (cssH - (PADDING + 4) * 2) / rows
-    ));
-    gridRef.current = { cols: Math.max(16, cols), rows: Math.max(12, rows), cell: Math.max(14, cell) };
+    // Available CSS box for canvas
+    const cardWidth = Math.max(300, wrap.clientWidth);
+    const maxCanvasHeight = Math.max(
+      260,
+      Math.floor(window.innerHeight * (isLandscape ? 0.72 : 0.58))  // cap using vh
+    );
+    const cssW = cardWidth;
+    const cssH = Math.min(maxCanvasHeight, window.innerHeight - reserve);
 
-    const innerW = gridRef.current.cols * gridRef.current.cell + PADDING * 2;
-    const innerH = gridRef.current.rows * gridRef.current.cell + (PADDING + 4) * 2;
+    // Grid target: fixed columns, rows by orientation
+    const rows = isLandscape ? ROWS_LAND : ROWS_POR;
+    const cols = COLS;
+
+    // Find cell size that fits both width & height budgets
+    const availW = cssW - PADDING * 2;
+    const availH = cssH - (PADDING + 4) * 2;
+    const cell = Math.max(
+      12,
+      Math.floor(Math.min(availW / cols, availH / rows))
+    );
+
+    gridRef.current = { cols, rows, cell };
+
+    const innerW = cols * cell + PADDING * 2;
+    const innerH = rows * cell + (PADDING + 4) * 2;
 
     canvas.width  = Math.floor(innerW * dpr);
     canvas.height = Math.floor(innerH * dpr);
@@ -135,6 +154,7 @@ export default function SnakeGame() {
     const ro = new ResizeObserver(resizeCanvas);
     wrapRef.current && ro.observe(wrapRef.current);
     window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", resizeCanvas);
     setTimeout(() => wrapRef.current?.focus(), 0);
 
     const onVis = () => { if (document.hidden) pause(); };
@@ -143,6 +163,7 @@ export default function SnakeGame() {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("orientationchange", resizeCanvas);
       document.removeEventListener("visibilitychange", onVis);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -339,14 +360,13 @@ export default function SnakeGame() {
     if (!runningRef.current) { ensureAudio(); start(); }
   };
 
-  // D-pad press handlers (no preventDefault so clicks fire)
   const onPadDown = (x, y) => () => { lockBodyScroll(true); setDir(x, y); };
   const onPadUp = () => { lockBodyScroll(false); };
 
   return (
     <div
       ref={wrapRef}
-      className="w-full focus:outline-none select-none"
+      className="w-full focus:outline-none select-none max-h-[90vh] overflow-hidden"
       tabIndex={0}
     >
       <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl">
@@ -371,7 +391,7 @@ export default function SnakeGame() {
           </div>
         </div>
 
-        {/* Canvas (touch handled here, not on wrapper) */}
+        {/* Canvas */}
         <div className="mt-2 flex justify-center">
           <canvas
             ref={canvasRef}
@@ -383,8 +403,8 @@ export default function SnakeGame() {
           />
         </div>
 
-        {/* Mobile D-pad — big & close; uses pointer + touch, no preventDefault */}
-        <div className="mt-3 grid grid-cols-3 place-items-center gap-1.5 sm:hidden">
+        {/* Mobile D-pad — keep visible up to lg (so landscape phones still see it) */}
+        <div className="mt-3 grid grid-cols-3 place-items-center gap-1.5 lg:hidden">
           <span />
           <button
             type="button"
