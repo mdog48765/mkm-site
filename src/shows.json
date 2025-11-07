@@ -10,21 +10,35 @@
       "Elm City Radio"
     ],
     "flyer": "/flyers/2025-11-08-pr.jpg",
-    "notes": "BYOB",
+    "notes": "BYOB, MUST BE 21+ TO DRINK",
     "sortDate": "2025-11-08T19:00"
   },
   {
     "id": "2025-11-22-hc",
     "title": "Cold Nights and Hot Mics",
-    "dateText": "Friday, Nov. 22nd",
+    "dateText": "Saturday, Nov. 22nd",
     "timeText": "7PM–11PM",
     "price": "$5",
     "ages": "18+",
     "lineup": [
-      "TBA"
+      "SRT POST, LAMART COX, LUH FOGZ, HOLDYN, ZACTYRR, THE ANGEL OF MARNICO"
     ],
     "flyer": "/flyers/2025-11-22-hc.jpg",
-    "notes": "Live music, photo booth, and refreshments. Open Mic 7–8PM, Performers 8–11PM",
+    "notes": "Live music, photo booth, and refreshments. Open Mic 7–8PM., Performers 8-11, open mic slots are 5 minutes MAX. Acapella accepted. *MUST BRING HARD DRIVE WITH SONG YOU WANT TO PLAY AHEAD OF TIME*",
     "sortDate": "2025-11-22T19:00"
+  },
+  {
+    "id": "2025-12-20-n8",
+    "title": "NIL8 at Pizza Records",
+    "dateText": "Saturday, Dec. 20th",
+    "timeText": "9PM–2AM",
+    "price": "$15",
+    "ages": "All Ages",
+    "lineup": [
+      "NIL8, Crash Planet, Master Bastard, Short Notice"
+    ],
+    "flyer": "/flyers/2025-12-20-n8.jpg",
+    "notes": "BYOB, MUST BE 21+ TO DRINK",
+    "sortDate": "2025-12-20T21:00"
   }
 ]

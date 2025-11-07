@@ -9,7 +9,7 @@ const run = (cmd, label) => {
 const get = (cmd) => execSync(cmd).toString().trim();
 
 try {
-  // Optional custom message: npm run release -- "your message"
+  // npm run release -- "your message"
   const msg = process.argv.slice(2).join(" ").trim();
 
   // 1) Build optimized gallery & (optionally) a local production build
