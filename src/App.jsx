@@ -1,6 +1,7 @@
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import SnakeGame from "./components/SnakeGame.jsx";
+import EggHintWrapper from "./components/EggHintWrapper";
 
 /* ===== Imports for dynamic content ===== */
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
@@ -480,27 +481,51 @@ export default function App() {
   }
 
   /* ===== Easter Egg: 5 rapid clicks on logo opens Snake modal ===== */
-  const [showGame, setShowGame] = useState(false);
-  const [logoClicks, setLogoClicks] = useState(0);
-  const clickTimerRef = useRef(null);
+ // ===== Easter Egg + Home (5 taps to open, else Home) =====
+const [showGame, setShowGame] = useState(false);
 
-  function onLogoClick(e) {
-    // prevent default anchor jump while counting clicks
-    e.preventDefault();
-    setLogoClicks((n) => {
-      const next = n + 1;
-      if (next === 1) {
-        clearTimeout(clickTimerRef.current);
-        clickTimerRef.current = setTimeout(() => setLogoClicks(0), 3000); // 3s window
-      }
-      if (next >= 5) {
-        clearTimeout(clickTimerRef.current);
-        setLogoClicks(0);
-        setShowGame(true);
-      }
-      return next;
-    });
+const clickTimesRef = useRef([]);   // rolling timestamps of taps
+const homeNavTimer  = useRef(null);
+
+const EGG_TAPS = 5;
+const EGG_WINDOW_MS = 3000;  // taps must occur within this window
+const HOME_DELAY_MS = 220;   // delay to allow multi-tap detection
+
+function onLogoClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // cancel any pending "home" while we decide if this is multi-tap
+  if (homeNavTimer.current) {
+    clearTimeout(homeNavTimer.current);
+    homeNavTimer.current = null;
   }
+
+  const now = performance.now();
+
+  // keep only taps inside the rolling window
+  const taps = clickTimesRef.current.filter(t => now - t < EGG_WINDOW_MS);
+  taps.push(now);
+  clickTimesRef.current = taps;
+
+  if (taps.length >= EGG_TAPS) {
+    clickTimesRef.current = [];
+    setShowGame(true);
+    return;
+  }
+
+  // not enough taps: schedule home shortly (single-tap UX)
+  homeNavTimer.current = setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, HOME_DELAY_MS);
+}
+
+// optional: suppress native dblclick quirks (treat dblclick as 2 taps only)
+function onLogoDoubleClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
 
   /* ===== UI ===== */
   
@@ -508,31 +533,42 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
-        <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <a href="#home" onClick={onLogoClick} className="flex items-center gap-3">
-            {logoBroken ? (
-              <div className="h-20 w-20 rounded bg-red-600" aria-label="MKM Logo" />
-            ) : (
-              <img
-                src={LOGO_SRC}
-                alt="MKM Logo"
-                className="h-20 w-20 object-contain"
-                onError={() => setLogoBroken(true)}
-              />
-            )}
-          </a>
-          <nav className="flex items-center gap-5 text-sm">
-            <a href="#gallery" className="hover:text-red-400">Gallery</a>
-            <a href="#shows" className="hover:text-red-400">Shows</a>
-            <a href="#about" className="hover:text-red-400">About</a>
-            <a href="#book" className="hover:text-red-400">Book</a>
-            <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
-               Contact
-            </a>
-          </nav>
-        </div>
-      </header>
+     <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
+  <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    {/* Logo: single anchor, egg + home logic here */}
+    <EggHintWrapper rippleRadius={24} demoOnMount={true}>
+      <a
+        href="/"
+        onClick={onLogoClick}
+        onDoubleClick={onLogoDoubleClick}
+        className="flex items-center gap-3 block [line-height:0]"
+        aria-label="MKM Home"
+      >
+        {logoBroken ? (
+          <div className="h-12 w-12 rounded bg-red-600" aria-label="MKM Logo" />
+        ) : (
+          <img
+            id="egg-trigger"
+            src={LOGO_SRC}
+            alt="MKM Entertainment Logo"
+            className="block h-12 w-auto cursor-pointer select-none focus-visible:ring-0"
+            draggable="false"
+          />
+        )}
+      </a>
+    </EggHintWrapper>
+
+    <nav className="flex items-center gap-5 text-sm">
+      <a href="#gallery" className="hover:text-red-400">Gallery</a>
+      <a href="#shows" className="hover:text-red-400">Shows</a>
+      <a href="#about" className="hover:text-red-400">About</a>
+      <a href="#book" className="hover:text-red-400">Book</a>
+      <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
+        Contact
+      </a>
+    </nav>
+  </div>
+</header>
 
       {/* Hero */}
       <section id="home" className="relative overflow-hidden">
@@ -1064,7 +1100,7 @@ export default function App() {
         >
           <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 p-3">
-              <h3 className="text-lg font-semibold">Snake — MKM Edition</h3>
+              <h3 className="text-lg font-semibold">*EASTER EGG* Snake — MKM Edition</h3>
               <button
                 onClick={() => setShowGame(false)}
                 className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:bg-white/10"

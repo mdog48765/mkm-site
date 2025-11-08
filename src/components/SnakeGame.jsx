@@ -1,5 +1,5 @@
 // src/components/SnakeGame.jsx
-//v1.0.8
+//v1.1.1
 import React, { useEffect, useRef, useState } from "react";
 
 const COLS      = 24;   // fixed columns (stable feel)
