@@ -11,6 +11,7 @@
     "gallery": "node scripts/build-gallery.mjs",
     "deploy": "npm run gallery && vercel --prod",
     "release": "node scripts/release.mjs",
+    "release:deploy": "node scripts/release.mjs --deploy",
     "maintain:shows": "node scripts/maintainShows.mjs",
     "maintain:shows:dry": "node scripts/maintainShows.mjs --dry",
     "maintain:shows:force": "node scripts/maintainShows.mjs --force",
