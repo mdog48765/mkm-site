@@ -1,7 +1,7 @@
-
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import SnakeGame from "./components/SnakeGame.jsx";
 import EggHintWrapper from "./components/EggHintWrapper";
+import "./index.css";
 
 /* ===== Imports for dynamic content ===== */
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
@@ -16,6 +16,84 @@ const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896";
 const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
 const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // file is in /public
+
+/* ===== Schema helpers (Next Event from shows.json) ===== */
+
+// Pick the next upcoming show based on sortDate
+const getNextShowForSchema = (shows) => {
+  const now = new Date();
+
+  const itemsWithDates = shows
+    .map((show) => {
+      if (!show.sortDate) return null;
+
+      // sortDate should be "YYYY-MM-DD" or a full ISO string
+      const date = new Date(show.sortDate);
+      if (Number.isNaN(date.getTime())) return null;
+
+      return { show, date };
+    })
+    .filter(Boolean)
+    .filter((item) => item.date >= now)
+    .sort((a, b) => a.date - b.date);
+
+  return itemsWithDates.length ? itemsWithDates[0].show : null;
+};
+
+const buildEventSchemaFromShow = (show) => {
+  // Name: try your fields, fall back to generic
+  const name =
+    show.title ||
+    show.eventName ||
+    show.headliner ||
+    "Live Show at Pizza Records";
+
+  const description =
+    show.description ||
+    "Weekend live music with full MKM Entertainment production at Pizza Records.";
+
+  // Use sortDate as base; if only a date, assume 8PM local
+  let startDate = null;
+  if (show.sortDate) {
+    if (show.sortDate.length === 10) {
+      // "YYYY-MM-DD"
+      startDate = `${show.sortDate}T20:00:00-06:00`;
+    } else {
+      // assume it's already an ISO datetime string
+      startDate = show.sortDate;
+    }
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name,
+    description,
+    startDate,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      "name": "Pizza Records",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "59 E Central Park Plaza",
+        "addressLocality": "Jacksonville",
+        "addressRegion": "IL",
+        "postalCode": "62650",
+        "addressCountry": "US"
+      }
+    },
+    image: [
+      "https://mkmentertainmentllc.com/og-img.jpg"
+    ],
+    organizer: {
+      "@type": "Organization",
+      "name": "MKM Entertainment LLC",
+      "url": "https://mkmentertainmentllc.com/"
+    }
+  };
+};
 
 /* ===== API endpoint (kept local-relative; Vercel routes /api) ===== */
 const API_URL = "/api/send-email";
@@ -190,7 +268,7 @@ function UpcomingShows() {
                 </dl>
 
                 {Array.isArray(e.lineup) && e.lineup.length > 0 && (
-                  <p className="text-sm text-white/80">
+                  <p className="text-sm text.white/80">
                     <span className="text-white/60">Lineup: </span>{e.lineup.join(", ")}
                   </p>
                 )}
@@ -363,6 +441,12 @@ export default function App() {
     }
   }, [submitting, sent]);
 
+  // ===== Next Event for Schema.org (from shows.json) =====
+  const nextShowForSchema = useMemo(
+    () => getNextShowForSchema(Array.isArray(SHOWS) ? SHOWS : []),
+    []
+  );
+
   /* ===== Packages & Add-ons ===== */
   const pizzaPackages = useMemo(
     () => [
@@ -481,216 +565,185 @@ export default function App() {
   }
 
   /* ===== Easter Egg: 5 rapid clicks on logo opens Snake modal ===== */
- // ===== Easter Egg + Home (5 taps to open, else Home) =====
-const [showGame, setShowGame] = useState(false);
+  // ===== Easter Egg + Home (5 taps to open, else Home) =====
+  const [showGame, setShowGame] = useState(false);
 
-const clickTimesRef = useRef([]);   // rolling timestamps of taps
-const homeNavTimer  = useRef(null);
+  const clickTimesRef = useRef([]);   // rolling timestamps of taps
+  const homeNavTimer  = useRef(null);
 
-const EGG_TAPS = 5;
-const EGG_WINDOW_MS = 3000;  // taps must occur within this window
-const HOME_DELAY_MS = 220;   // delay to allow multi-tap detection
+  const EGG_TAPS = 5;
+  const EGG_WINDOW_MS = 3000;  // taps must occur within this window
+  const HOME_DELAY_MS = 220;   // delay to allow multi-tap detection
 
-function onLogoClick(e) {
-  e.preventDefault();
-  e.stopPropagation();
+  function onLogoClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // cancel any pending "home" while we decide if this is multi-tap
-  if (homeNavTimer.current) {
-    clearTimeout(homeNavTimer.current);
-    homeNavTimer.current = null;
+    // cancel any pending "home" while we decide if this is multi-tap
+    if (homeNavTimer.current) {
+      clearTimeout(homeNavTimer.current);
+      homeNavTimer.current = null;
+    }
+
+    const now = performance.now();
+
+    // keep only taps inside the rolling window
+    const taps = clickTimesRef.current.filter(t => now - t < EGG_WINDOW_MS);
+    taps.push(now);
+    clickTimesRef.current = taps;
+
+    if (taps.length >= EGG_TAPS) {
+      clickTimesRef.current = [];
+      setShowGame(true);
+      return;
+    }
+
+    // not enough taps: schedule home shortly (single-tap UX)
+    homeNavTimer.current = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, HOME_DELAY_MS);
   }
 
-  const now = performance.now();
-
-  // keep only taps inside the rolling window
-  const taps = clickTimesRef.current.filter(t => now - t < EGG_WINDOW_MS);
-  taps.push(now);
-  clickTimesRef.current = taps;
-
-  if (taps.length >= EGG_TAPS) {
-    clickTimesRef.current = [];
-    setShowGame(true);
-    return;
+  // optional: suppress native dblclick quirks (treat dblclick as 2 taps only)
+  function onLogoDoubleClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
-
-  // not enough taps: schedule home shortly (single-tap UX)
-  homeNavTimer.current = setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, HOME_DELAY_MS);
-}
-
-// optional: suppress native dblclick quirks (treat dblclick as 2 taps only)
-function onLogoDoubleClick(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
 
   /* ===== UI ===== */
-  
-
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
-      {/* Header */}
-     <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
-  <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-    {/* Logo: single anchor, egg + home logic here */}
-    <EggHintWrapper rippleRadius={24} demoOnMount={true}>
-      <a
-        href="/"
-        onClick={onLogoClick}
-        onDoubleClick={onLogoDoubleClick}
-        className="flex items-center gap-3 block [line-height:0]"
-        aria-label="MKM Home"
-      >
-        {logoBroken ? (
-          <div className="h-12 w-12 rounded bg-red-600" aria-label="MKM Logo" />
-        ) : (
-          <img
-            id="egg-trigger"
-            src={LOGO_SRC}
-            alt="MKM Entertainment Logo"
-            className="block h-12 w-auto cursor-pointer select-none focus-visible:ring-0"
-            draggable="false"
-          />
-        )}
-      </a>
-    </EggHintWrapper>
+    <>
+      {/* Dynamic Event JSON-LD for the next upcoming show */}
+      {nextShowForSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(
+              buildEventSchemaFromShow(nextShowForSchema)
+            ),
+          }}
+        />
+      )}
 
-    <nav className="flex items-center gap-5 text-sm">
-      <a href="#gallery" className="hover:text-red-400">Gallery</a>
-      <a href="#shows" className="hover:text-red-400">Shows</a>
-      <a href="#about" className="hover:text-red-400">About</a>
-      <a href="#book" className="hover:text-red-400">Book</a>
-      <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
-        Contact
-      </a>
-    </nav>
-  </div>
-</header>
+      <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
+          <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            {/* Logo: single anchor, egg + home logic here */}
+            <EggHintWrapper rippleRadius={24} demoOnMount={true}>
+              <a
+                href="/"
+                onClick={onLogoClick}
+                onDoubleClick={onLogoDoubleClick}
+                className="flex items-center gap-3 block [line-height:0]"
+                aria-label="MKM Home"
+              >
+                {logoBroken ? (
+                  <div className="h-12 w-12 rounded bg-red-600" aria-label="MKM Logo" />
+                ) : (
+                  <img
+                    id="egg-trigger"
+                    src={LOGO_SRC}
+                    alt="MKM Entertainment Logo"
+                    className="block h-12 w-auto cursor-pointer select-none focus-visible:ring-0"
+                    draggable="false"
+                  />
+                )}
+              </a>
+            </EggHintWrapper>
 
-      {/* Hero */}
-      <section id="home" className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/20 blur-3xl" />
-          <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        </div>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-          <p className="text-sm text-white/60">Jacksonville, Illinois • Weekends at Pizza Records</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">Get Off The Couch!!</h1>
-          <p className="mt-4 max-w-2xl text-white/80">
-            Full-service shows at Pizza Records and professional sound equipment rentals. Modern, sleek production by design.
-          </p>
-          <div className="mt-8">
-            <a
-              href="#book"
-              className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition"
-            >
-              Book Now
-            </a>
+            <nav className="flex items-center gap-5 text-sm">
+              <a href="#gallery" className="hover:text-red-400">Gallery</a>
+              <a href="#shows" className="hover:text-red-400">Shows</a>
+              <a href="#about" className="hover:text-red-400">About</a>
+              <a href="#book" className="hover:text-red-400">Book</a>
+              <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
+                Contact
+              </a>
+            </nav>
           </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Gallery */}
-      <section id="gallery" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GALLERY.map((g, i) => (
-              <SafeImg key={g.jpg} jpg={g.jpg} webp={g.webp} alt={`Event photo ${i + 1}`} />
-            ))}
+        {/* Hero */}
+        <section id="home" className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/20 blur-3xl" />
+            <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
           </div>
-        </div>
-      </section>
-
-      {/* Upcoming & Past Shows */}
-      <UpcomingShows />
-      <PastShows />
-
-      {/* About */}
-      <AboutSection />
-
-      {/* Booking */}
-      <section id="book" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Book a Show</h2>
-          <p className="mt-3 text-white/70">Choose the location, pick a package, and (for External) add any extras.</p>
-
-          {/* Tabs */}
-          <div className="mt-6 inline-flex rounded-full border border-white/10 bg-white/5 p-1 shadow-sm">
-            {["Pizza Records", "External"].map((t) => {
-              const active = bookingType === t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setBookingType(t);
-                    setSelectedService("");
-                    if (t === "Pizza Records") setAddOns([]);
-                  }}
-                  aria-selected={active}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition outline-none ${
-                    active
-                      ? "bg-red-600 shadow ring-1 ring-red-400/40"
-                      : "hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
-                  }`}
-                >
-                  {t === "External" ? "External Booking" : "Pizza Records"}
-                </button>
-              );
-            })}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+            <p className="text-sm text-white/60">Jacksonville, Illinois • Weekends at Pizza Records</p>
+            <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">Get Off The Couch!!</h1>
+            <p className="mt-4 max-w-2xl text-white/80">
+              Full-service shows at Pizza Records and professional sound equipment rentals. Modern, sleek production by design.
+            </p>
+            <div className="mt-8">
+              <a
+                href="#book"
+                className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition"
+              >
+                Book Now
+              </a>
+            </div>
           </div>
+        </section>
 
-          {/* Content */}
-          <div className="mt-8 grid gap-8 lg:grid-cols-3">
-            {/* Packages */}
-            <div className="lg:col-span-2 space-y-8">
-              {bookingType === "Pizza Records" && (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {pizzaPackages.map((p) => (
-                    <div
-                      key={p.title}
-                      className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
-                        ${
-                          selectedService === p.title
-                            ? "ring-2 ring-red-500"
-                            : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"
-                        }`}
-                    >
-                      {p.popular && (
-                        <span className="self-end -mt-3 mb-2 inline-flex items-center rounded-full bg-red-600 px-2 py-1 text-xs font-semibold shadow">
-                          Most popular
-                        </span>
-                      )}
-                      <h3 className="text-lg font-semibold">{p.title}</h3>
-                      <p className="mt-1 text-2xl font-extrabold text-red-400">{p.price}</p>
-                      {p.features?.length > 0 && (
-                        <ul className="mt-4 space-y-2 text-sm text-white/80">
-                          {p.features.map((f) => (
-                            <li key={f} className="flex items-start gap-2">
-                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
-                              <span>{f}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <button
-                        onClick={() => selectPackage(p.title)}
-                        className="mt-6 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
-                      >
-                        {selectedService === p.title ? "Selected" : "Select"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {/* Gallery */}
+        <section id="gallery" className="py-16 border-t border-white/10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {GALLERY.map((g, i) => (
+                <SafeImg key={g.jpg} jpg={g.jpg} webp={g.webp} alt={`Event photo ${i + 1}`} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-              {bookingType === "External" && (
-                <>
+        {/* Upcoming & Past Shows */}
+        <UpcomingShows />
+        <PastShows />
+
+        {/* About */}
+        <AboutSection />
+
+        {/* Booking */}
+        <section id="book" className="py-16 border-t border-white/10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl sm:text-4xl font-bold">Book a Show</h2>
+            <p className="mt-3 text-white/70">Choose the location, pick a package, and (for External) add any extras.</p>
+
+            {/* Tabs */}
+            <div className="mt-6 inline-flex rounded-full border border-white/10 bg-white/5 p-1 shadow-sm">
+              {["Pizza Records", "External"].map((t) => {
+                const active = bookingType === t;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setBookingType(t);
+                      setSelectedService("");
+                      if (t === "Pizza Records") setAddOns([]);
+                    }}
+                    aria-selected={active}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition outline-none ${
+                      active
+                        ? "bg-red-600 shadow ring-1 ring-red-400/40"
+                        : "hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
+                    }`}
+                  >
+                    {t === "External" ? "External Booking" : "Pizza Records"}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Content */}
+            <div className="mt-8 grid gap-8 lg:grid-cols-3">
+              {/* Packages */}
+              <div className="lg:col-span-2 space-y-8">
+                {bookingType === "Pizza Records" && (
                   <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                    {externalPackages.map((p) => (
+                    {pizzaPackages.map((p) => (
                       <div
                         key={p.title}
                         className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
@@ -707,14 +760,16 @@ function onLogoDoubleClick(e) {
                         )}
                         <h3 className="text-lg font-semibold">{p.title}</h3>
                         <p className="mt-1 text-2xl font-extrabold text-red-400">{p.price}</p>
-                        <ul className="mt-4 space-y-2 text-sm text-white/80">
-                          {p.features?.map((f) => (
-                            <li key={f} className="flex items-start gap-2">
-                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
-                              <span>{f}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        {p.features?.length > 0 && (
+                          <ul className="mt-4 space-y-2 text-sm text-white/80">
+                            {p.features.map((f) => (
+                              <li key={f} className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                         <button
                           onClick={() => selectPackage(p.title)}
                           className="mt-6 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
@@ -724,396 +779,436 @@ function onLogoDoubleClick(e) {
                       </div>
                     ))}
                   </div>
+                )}
 
-                  {/* Add-ons */}
-                  <div id="addons" className="rounded-2xl border border-white/10 p-6 bg-white/[0.04]">
-                    <h4 className="text-base font-semibold">Add-ons</h4>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {externalAddOns.map((a) => (
-                        <label
-                          key={a.key}
-                          className={`flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 cursor-pointer
-                            ${addOns.includes(a.key) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
+                {bookingType === "External" && (
+                  <>
+                    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                      {externalPackages.map((p) => (
+                        <div
+                          key={p.title}
+                          className={`rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6 flex flex-col
+                            ${
+                              selectedService === p.title
+                                ? "ring-2 ring-red-500"
+                                : "hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition"
+                            }`}
                         >
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 accent-red-600"
-                            checked={addOns.includes(a.key)}
-                            onChange={() => toggleAddOn(a.key)}
-                          />
-                          <span className="text-sm">{a.label}</span>
-                        </label>
+                          {p.popular && (
+                            <span className="self-end -mt-3 mb-2 inline-flex items-center rounded-full bg-red-600 px-2 py-1 text-xs font-semibold shadow">
+                              Most popular
+                            </span>
+                          )}
+                          <h3 className="text-lg font-semibold">{p.title}</h3>
+                          <p className="mt-1 text-2xl font-extrabold text-red-400">{p.price}</p>
+                          <ul className="mt-4 space-y-2 text-sm text-white/80">
+                            {p.features?.map((f) => (
+                              <li key={f} className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <button
+                            onClick={() => selectPackage(p.title)}
+                            className="mt-6 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
+                          >
+                            {selectedService === p.title ? "Selected" : "Select"}
+                          </button>
+                        </div>
                       ))}
                     </div>
-                    <p className="mt-3 text-xs text-white/60">
-                      Operator included when we run equipment. Travel outside local area billed at $0.50/mi (round trip).
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
 
-            {/* Cart */}
-            <aside
-              id="cart"
-              className="lg:sticky lg:top-24 h-fit rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]"
-            >
-              <h3 className="text-xl font-semibold">Your Selection</h3>
-              <dl className="mt-4 space-y-2 text-sm">
-                <div className="grid grid-cols-4 gap-2">
-                  <dt className="col-span-2 text-white/60">Booking Type</dt>
-                  <dd className="col-span-2">{bookingType}</dd>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <dt className="col-span-2 text-white/60">Package</dt>
-                  <dd className="col-span-2">{selectedService || "—"}</dd>
-                </div>
-                {bookingType === "External" && (
-                  <div className="grid grid-cols-4 gap-2">
-                    <dt className="col-span-2 text-white/60">Add-ons</dt>
-                    <dd className="col-span-2">{addOns.length ? addOns.join(", ") : "None"}</dd>
-                  </div>
+                    {/* Add-ons */}
+                    <div id="addons" className="rounded-2xl border border-white/10 p-6 bg-white/[0.04]">
+                      <h4 className="text-base font-semibold">Add-ons</h4>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {externalAddOns.map((a) => (
+                          <label
+                            key={a.key}
+                            className={`flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 cursor-pointer
+                              ${addOns.includes(a.key) ? "bg-white/[0.08]" : "bg-white/[0.03] hover:bg-white/[0.06]"}`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-red-600"
+                              checked={addOns.includes(a.key)}
+                              onChange={() => toggleAddOn(a.key)}
+                            />
+                            <span className="text-sm">{a.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs text-white/60">
+                        Operator included when we run equipment. Travel outside local area billed at $0.50/mi (round trip).
+                      </p>
+                    </div>
+                  </>
                 )}
-              </dl>
-
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={() => {
-                    setSelectedService("");
-                    setAddOns([]);
-                  }}
-                  className="inline-flex rounded-full border border-white/20 px-4 py-2 text-sm hover:border-white/40"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={() => scrollToId("#contact")}
-                  className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
-                >
-                  Proceed to Contact
-                </button>
               </div>
 
-              <p className="mt-3 text-xs text-white/60">This summary is included in your booking request.</p>
-            </aside>
+              {/* Cart */}
+              <aside
+                id="cart"
+                className="lg:sticky lg:top-24 h-fit rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]"
+              >
+                <h3 className="text-xl font-semibold">Your Selection</h3>
+                <dl className="mt-4 space-y-2 text-sm">
+                  <div className="grid grid-cols-4 gap-2">
+                    <dt className="col-span-2 text-white/60">Booking Type</dt>
+                    <dd className="col-span-2">{bookingType}</dd>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <dt className="col-span-2 text-white/60">Package</dt>
+                    <dd className="col-span-2">{selectedService || "—"}</dd>
+                  </div>
+                  {bookingType === "External" && (
+                    <div className="grid grid-cols-4 gap-2">
+                      <dt className="col-span-2 text-white/60">Add-ons</dt>
+                      <dd className="col-span-2">{addOns.length ? addOns.join(", ") : "None"}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedService("");
+                      setAddOns([]);
+                    }}
+                    className="inline-flex rounded-full border border-white/20 px-4 py-2 text-sm hover:border-white/40"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => scrollToId("#contact")}
+                    className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
+                  >
+                    Proceed to Contact
+                  </button>
+                </div>
+
+                <p className="mt-3 text-xs text-white/60">This summary is included in your booking request.</p>
+              </aside>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Contact & Booking */}
-      <section id="contact" className="py-16 border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold">Contact & Booking</h2>
-          <p className="mt-3 text-white/70 max-w-2xl">Tell us about your event and we’ll get you on the calendar.</p>
+        {/* Contact & Booking */}
+        <section id="contact" className="py-16 border-t border-white/10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl sm:text-4xl font-bold">Contact & Booking</h2>
+            <p className="mt-3 text-white/70 max-w-2xl">Tell us about your event and we’ll get you on the calendar.</p>
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-2">
-            {/* Form */}
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (submitting) return;
-                setSubmitting(true);
-                setSent(false);
-                setErrorMsg("");
-                setErrors({});
+            <div className="mt-10 grid gap-8 lg:grid-cols-2">
+              {/* Form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (submitting) return;
+                  setSubmitting(true);
+                  setSent(false);
+                  setErrorMsg("");
+                  setErrors({});
 
-                if (!canSubmit) {
-                  setSubmitting(false);
-                  setErrorMsg("Please wait a moment before sending again.");
-                  return;
-                }
+                  if (!canSubmit) {
+                    setSubmitting(false);
+                    setErrorMsg("Please wait a moment before sending again.");
+                    return;
+                  }
 
-                const formEl = e.currentTarget;
-                const form = new FormData(formEl);
+                  const formEl = e.currentTarget;
+                  const form = new FormData(formEl);
 
-                const msgLen = trim(form.get("message") || "").length;
-                setMessagePreviewLen(msgLen);
+                  const msgLen = trim(form.get("message") || "").length;
+                  setMessagePreviewLen(msgLen);
 
-                // Validate
-                const vErrs = validateForm(form, bookingType, selectedService, addOns);
-                if (Object.keys(vErrs).length > 0) {
-                  setErrors(vErrs);
-                  setErrorMsg(vErrs.honeypot ? "Submission blocked by spam filter." : "Fix the highlighted fields.");
-                  setSubmitting(false);
-                  return;
-                }
+                  // Validate
+                  const vErrs = validateForm(form, bookingType, selectedService, addOns);
+                  if (Object.keys(vErrs).length > 0) {
+                    setErrors(vErrs);
+                    setErrorMsg(vErrs.honeypot ? "Submission blocked by spam filter." : "Fix the highlighted fields.");
+                    setSubmitting(false);
+                    return;
+                  }
 
-                const isPizzaBooking = bookingType === "Pizza Records";
-                const subjectTag = isPizzaBooking ? "[Pizza Records]" : "[External]";
-                const chosenService =
-                  selectedService || form.get("service") || (isPizzaBooking ? "Pizza Records – Basic" : "External – Compact PA");
+                  const isPizzaBooking = bookingType === "Pizza Records";
+                  const subjectTag = isPizzaBooking ? "[Pizza Records]" : "[External]";
+                  const chosenService =
+                    selectedService || form.get("service") || (isPizzaBooking ? "Pizza Records – Basic" : "External – Compact PA");
 
-                const payload = {
-                  name: trim(form.get("name") || ""),
-                  email: trim(form.get("email") || ""),
-                  phone: trim(form.get("phone") || ""),
-                  service: chosenService,
-                  date: trim(form.get("date") || ""),
-                  message: trim(form.get("message") || ""),
-                  bookingType,
-                  selectedService: selectedService || "",
-                  addOns: isPizzaBooking ? [] : addOns,
-                  company: trim(form.get("company") || ""), // honeypot travels to server
-                  subject: `${subjectTag} ${chosenService} — Booking Request`,
-                };
-
-                try {
-                  const res = await fetch(API_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                  });
-
-                  const json = await res.json().catch(() => ({}));
-                  if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`);
+                  const payload = {
+                    name: trim(form.get("name") || ""),
+                    email: trim(form.get("email") || ""),
+                    phone: trim(form.get("phone") || ""),
+                    service: chosenService,
+                    date: trim(form.get("date") || ""),
+                    message: trim(form.get("message") || ""),
+                    bookingType,
+                    selectedService: selectedService || "",
+                    addOns: isPizzaBooking ? [] : addOns,
+                    company: trim(form.get("company") || ""), // honeypot travels to server
+                    subject: `${subjectTag} ${chosenService} — Booking Request`,
+                  };
 
                   try {
-                    localStorage.setItem("mkm_last_submit_ts", String(Date.now()));
-                  } catch {}
+                    const res = await fetch(API_URL, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(payload),
+                    });
 
-                  setSent(true);
-                  formEl.reset();
-                  setSelectedService("");
-                  setAddOns([]);
-                  setMessagePreviewLen(0);
-                  setErrors({});
-                  setErrorMsg("");
-                } catch (err) {
-                  setErrorMsg(err?.message || "Something went wrong sending your request.");
-                } finally {
-                  setSubmitting(false);
-                }
-              }}
-              noValidate
-              className="rounded-2xl border border-white/10 bg-white/5 p-6"
-            >
-              {/* Honeypot (hidden from users; bots often fill it) */}
-              <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
-                <label htmlFor="company">Company</label>
-                <input id="company" name="company" type="text" tabIndex={-1} autoComplete="organization" />
-              </div>
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`);
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <label className="text-sm text-white/80">Your Name</label>
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.name ? "border-red-500" : "border-white/10"
-                    }`}
-                  />
-                  {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-                </div>
-                <div>
-                  <label className="text-sm text-white/80">Email</label>
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.email ? "border-red-500" : "border-white/10"
-                    }`}
-                  />
-                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-                </div>
-                <div>
-                  <label className="text-sm text-white/80">Phone</label>
-                  <input
-                    name="phone"
-                    type="tel"
-                    className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
-                  />
+                    try {
+                      localStorage.setItem("mkm_last_submit_ts", String(Date.now()));
+                    } catch {}
+
+                    setSent(true);
+                    formEl.reset();
+                    setSelectedService("");
+                    setAddOns([]);
+                    setMessagePreviewLen(0);
+                    setErrors({});
+                    setErrorMsg("");
+                  } catch (err) {
+                    setErrorMsg(err?.message || "Something went wrong sending your request.");
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                noValidate
+                className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              >
+                {/* Honeypot (hidden from users; bots often fill it) */}
+                <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
+                  <label htmlFor="company">Company</label>
+                  <input id="company" name="company" type="text" tabIndex={-1} autoComplete="organization" />
                 </div>
 
-                {/* Service (controlled & synced with cart) */}
-                <div>
-                  <label className="text-sm text-white/80">Service</label>
-                  <select
-                    name="service"
-                    value={
-                      selectedService || (bookingType === "External" ? "External – Compact PA" : "Pizza Records – Basic")
-                    }
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setSelectedService(next);
-                      const nextType = next.startsWith("External") ? "External" : "Pizza Records";
-                      setBookingType(nextType);
-                      if (nextType === "Pizza Records") setAddOns([]);
-                    }}
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.service ? "border-red-500" : "border-white/10"
-                    }`}
-                  >
-                    {pizzaPackages.map((p) => (
-                      <option key={p.title}>{p.title}</option>
-                    ))}
-                    {externalPackages.map((p) => (
-                      <option key={p.title}>{p.title}</option>
-                    ))}
-                  </select>
-                  {errors.service && <p className="mt-1 text-xs text-red-500">{errors.service}</p>}
-                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label className="text-sm text-white/80">Your Name</label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      className={`mt-1 w-full rounded-lg bg.black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                        errors.name ? "border-red-500" : "border-white/10"
+                      }`}
+                    />
+                    {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm text-white/80">Email</label>
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                        errors.email ? "border-red-500" : "border-white/10"
+                      }`}
+                    />
+                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm text-white/80">Phone</label>
+                    <input
+                      name="phone"
+                      type="tel"
+                      className="mt-1 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+                    />
+                  </div>
 
-                <div>
-                  <label className="text-sm text-white/80">Target Date</label>
-                  <input
-                    name="date"
-                    type="date"
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.date ? "border-red-500" : "border-white/10"
-                    }`}
-                  />
-                  {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
-                </div>
+                  {/* Service (controlled & synced with cart) */}
+                  <div>
+                    <label className="text-sm text-white/80">Service</label>
+                    <select
+                      name="service"
+                      value={
+                        selectedService || (bookingType === "External" ? "External – Compact PA" : "Pizza Records – Basic")
+                      }
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setSelectedService(next);
+                        const nextType = next.startsWith("External") ? "External" : "Pizza Records";
+                        setBookingType(nextType);
+                        if (nextType === "Pizza Records") setAddOns([]);
+                      }}
+                      className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                        errors.service ? "border-red-500" : "border-white/10"
+                      }`}
+                    >
+                      {pizzaPackages.map((p) => (
+                        <option key={p.title}>{p.title}</option>
+                      ))}
+                      {externalPackages.map((p) => (
+                        <option key={p.title}>{p.title}</option>
+                      ))}
+                    </select>
+                    {errors.service && <p className="mt-1 text-xs text-red-500">{errors.service}</p>}
+                  </div>
 
-                <div className="sm:col-span-2">
-                  <label className="text-sm text-white/80">Message</label>
-                  <textarea
-                    name="message"
-                    rows={5}
-                    placeholder="Event date, location, set length, genre, audience size, special needs..."
-                    className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
-                      errors.message ? "border-red-500" : "border-white/10"
-                    }`}
-                    required
-                    onInput={(e) => setMessagePreviewLen(trim(e.currentTarget.value).length)}
-                  />
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-white/50">
-                    <span>{messagePreviewLen} / 20</span>
-                    {errors.message && <span className="text-red-500">{errors.message}</span>}
+                  <div>
+                    <label className="text-sm text-white/80">Target Date</label>
+                    <input
+                      name="date"
+                      type="date"
+                      className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                        errors.date ? "border-red-500" : "border-white/10"
+                      }`}
+                    />
+                    {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-sm text-white/80">Message</label>
+                    <textarea
+                      name="message"
+                      rows={5}
+                      placeholder="Event date, location, set length, genre, audience size, special needs..."
+                      className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                        errors.message ? "border-red-500" : "border-white/10"
+                      }`}
+                      required
+                      onInput={(e) => setMessagePreviewLen(trim(e.currentTarget.value).length)}
+                    />
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-white/50">
+                      <span>{messagePreviewLen} / 20</span>
+                      {errors.message && <span className="text-red-500">{errors.message}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-6 flex items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={submitting || !canSubmit}
-                  className={`inline-flex items-center rounded-full px-6 py-3 font-semibold transition ${
-                    submitting || !canSubmit ? "bg-red-800 cursor-not-allowed" : "bg-red-600 hover:bg-red-500"
-                  }`}
-                >
-                  {submitting ? "Sending…" : canSubmit ? "Send Booking Request" : "Please wait…"}
-                </button>
-                <p className="text-sm text-white/60">
-                  Direct email:{" "}
-                  <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>
-                    {CONTACT_EMAIL}
-                  </a>
-                </p>
-              </div>
-
-              {sent && (
-                <div className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
-                  Thanks! Your request was sent. I’ll follow up at the email you provided.
+                <div className="mt-6 flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={submitting || !canSubmit}
+                    className={`inline-flex items-center rounded-full px-6 py-3 font-semibold transition ${
+                      submitting || !canSubmit ? "bg-red-800 cursor-not-allowed" : "bg-red-600 hover:bg-red-500"
+                    }`}
+                  >
+                    {submitting ? "Sending…" : canSubmit ? "Send Booking Request" : "Please wait…"}
+                  </button>
+                  <p className="text-sm text-white/60">
+                    Direct email:{" "}
+                    <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>
+                      {CONTACT_EMAIL}
+                    </a>
+                  </p>
                 </div>
-              )}
-              {!!errorMsg && (
-                <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-              {"honeypot" in errors && (
-                <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                  Submission blocked by spam filter.
-                </div>
-              )}
-            </form>
 
-            {/* Venue info */}
-            <div className="rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]">
-              <h3 className="text-xl font-semibold">Find Pizza Records</h3>
-              <div className="mt-4 grid gap-3 text-sm">
-                <InfoRow label="Venue" value="Pizza Records (Jacksonville, IL)" />
-                <InfoRow
-                  label="Phone"
-                  value={<a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>{PIZZA_RECORDS_PHONE_DISPLAY}</a>}
-                />
-                <InfoRow
-                  label="Email"
-                  value={<a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>{PIZZA_RECORDS_EMAIL}</a>}
-                />
-                <InfoRow label="Address" value={VENUE_ADDRESS} />
-              </div>
+                {sent && (
+                  <div className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
+                    Thanks! Your request was sent. I’ll follow up at the email you provided.
+                  </div>
+                )}
+                {!!errorMsg && (
+                  <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
+                    {errorMsg}
+                  </div>
+                )}
+                {"honeypot" in errors && (
+                  <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
+                    Submission blocked by spam filter.
+                  </div>
+                )}
+              </form>
 
-              <div className="mt-8 aspect-video w-full rounded-xl border border-white/10 overflow-hidden">
-                <iframe
-                  title="Pizza Records Map"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3067.765392391368!2d-90.23048392336818!3d39.732049071558336!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x87e9e2f2d7b99f93%3A0x7a1f9e55fdc2dd3!2s59%20E%20Central%20Park%20Plaza%2C%20Jacksonville%2C%20IL%2062650!5e0!3m2!1sen!2sus!4v1699999999999!5m2!1sen!2sus"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                />
+              {/* Venue info */}
+              <div className="rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-white/5 to-white/[0.02]">
+                <h3 className="text-xl font-semibold">Find Pizza Records</h3>
+                <div className="mt-4 grid gap-3 text-sm">
+                  <InfoRow label="Venue" value="Pizza Records (Jacksonville, IL)" />
+                  <InfoRow
+                    label="Phone"
+                    value={<a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>{PIZZA_RECORDS_PHONE_DISPLAY}</a>}
+                  />
+                  <InfoRow
+                    label="Email"
+                    value={<a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>{PIZZA_RECORDS_EMAIL}</a>}
+                  />
+                  <InfoRow label="Address" value={VENUE_ADDRESS} />
+                </div>
+
+                <div className="mt-8 aspect-video w-full rounded-xl border border-white/10 overflow-hidden">
+                  <iframe
+                    title="Pizza Records Map"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3067.765392391368!2d-90.23048392336818!3d39.732049071558336!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x87e9e2f2d7b99f93%3A0x7a1f9e55fdc2dd3!2s59%20E%20Central%20Park%20Plaza%2C%20Jacksonville%2C%20IL%2062650!5e0!3m2!1sen!2sus!4v1699999999999!5m2!1sen!2sus"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-sm flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-white/60">© {new Date().getFullYear()} MKM Entertainment LLC. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#book" className="hover:text-red-400">Book</a>
-            <a href="#gallery" className="hover:text-red-400">Gallery</a>
-            <a href="#shows" className="hover:text-red-400">Shows</a>
-            <a href="#contact" className="hover:text-red-400">Contact</a>
+        {/* Footer */}
+        <footer className="border-t border-white/10 py-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-white/60">© {new Date().getFullYear()} MKM Entertainment LLC. All rights reserved.</p>
+            <div className="flex items-center gap-6">
+              <a href="#book" className="hover:text-red-400">Book</a>
+              <a href="#gallery" className="hover:text-red-400">Gallery</a>
+              <a href="#shows" className="hover:text-red-400">Shows</a>
+              <a href="#contact" className="hover:text-red-400">Contact</a>
+            </div>
+            <div className="text-white/60">
+              MKM Line:{" "}
+              <a className="hover:text-red-400" href={`tel:${BUSINESS_PHONE_TEL}`}>
+                {BUSINESS_PHONE_DISPLAY}
+              </a>
+            </div>
           </div>
-          <div className="text-white/60">
-            MKM Line:{" "}
-            <a className="hover:text-red-400" href={`tel:${BUSINESS_PHONE_TEL}`}>
-              {BUSINESS_PHONE_DISPLAY}
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
+            <a
+              href="https://www.facebook.com/mkmentertainmentllc"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
+            >
+              Follow MKM Entertainment on Facebook
+            </a>
+            <a
+              href="https://www.facebook.com/share/1D2UXPisWA/?mibextid=wwXlfr"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
+            >
+              Follow Pizza Records on Facebook
             </a>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
-          <a
-            href="https://www.facebook.com/mkmentertainmentllc"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
-          >
-            Follow MKM Entertainment on Facebook
-          </a>
-          <a
-            href="https://www.facebook.com/share/1D2UXPisWA/?mibextid=wwXlfr"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold hover:bg-red-400 transition"
-          >
-            Follow Pizza Records on Facebook
-          </a>
-        </div>
-      </footer>
+        </footer>
 
-      {/* === Hidden Snake Game Modal (Easter Egg) === */}
-      {showGame && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 p-3">
-              <h3 className="text-lg font-semibold">*EASTER EGG* Snake — MKM Edition</h3>
-              <button
-                onClick={() => setShowGame(false)}
-                className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:bg-white/10"
-              >
-                Close
-              </button>
-            </div>
-            <div className="p-4">
-              <SnakeGame />
+        {/* === Hidden Snake Game Modal (Easter Egg) === */}
+        {showGame && (
+          <div
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 p-3">
+                <h3 className="text-lg font-semibold">*EASTER EGG* Snake — MKM Edition</h3>
+                <button
+                  onClick={() => setShowGame(false)}
+                  className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:bg-white/10"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="p-4">
+                <SnakeGame />
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
