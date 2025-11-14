@@ -2,31 +2,38 @@
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/thumbnail_MKM%20Entertainment%20logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MKM Entertainment LLC</title>
 
-    <!-- Canonical URL -->
-<link rel="canonical" href="https://mkmentertainmentllc.com/" />
+    <!-- Favicon -->
+    <link rel="icon" href="/thumbnail_MKM%20Entertainment%20logo.png" />
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://mkmentertainmentllc.com/" />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- Browser Theme Color -->
+    <meta name="theme-color" content="#000000" />
 
     <!-- Primary Meta -->
-    <meta
-      name="facebook-domain-verification"
-      content="mt3411fjjb37lk9zqasvu04w29wm98"
-    />
-    <meta
-      name="title"
-      content="MKM Entertainment — Pizza Records Shows"
-    />
+    <meta name="title" content="MKM Entertainment — Pizza Records Shows" />
     <meta
       name="description"
       content="Live shows, rentals, and full production with MKM Entertainment at Pizza Records."
     />
+    <meta name="image" content="https://mkmentertainmentllc.com/og-img.jpg" />
+
+    <!-- Facebook Domain Verification -->
+    <meta
+      name="facebook-domain-verification"
+      content="mt3411fjjb37lk9zqasvu04w29wm98"
+    />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mkmentertainmentllc.com" />
+    <meta property="og:url" content="https://mkmentertainmentllc.com/" />
     <meta
       property="og:title"
       content="MKM Entertainment — Pizza Records Shows"
@@ -45,6 +52,7 @@
     <!-- X / Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@MichaelKyleOG" />
+    <meta name="twitter:creator" content="@MichaelKyleOG" />
     <meta
       name="twitter:title"
       content="MKM Entertainment — Pizza Records Shows"
@@ -58,7 +66,11 @@
       content="https://mkmentertainmentllc.com/og-img.jpg"
     />
 
-    <!-- Organization Schema (static, safe to live in <head>) -->
+    <!-- Speed: Preconnect (optional but safe) -->
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com/" />
+
+    <!-- Organization Schema -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -66,20 +78,66 @@
         "name": "MKM Entertainment LLC",
         "url": "https://mkmentertainmentllc.com/",
         "logo": "https://mkmentertainmentllc.com/og-img.jpg",
-        "description": "Live shows, rentals, and full production with MKM Entertainment at Pizza Records in Jacksonville, Illinois.",
-        "telephone": "+1-217-883-0078",
-        "email": "michaelkylemusic@icloud.com",
+        "sameAs": [
+          "https://www.facebook.com/mkmentertainmentllc",
+          "https://x.com/MichaelKyleOG"
+        ],
         "address": {
           "@type": "PostalAddress",
+          "streetAddress": "59 E Central Park Plaza",
           "addressLocality": "Jacksonville",
           "addressRegion": "IL",
           "postalCode": "62650",
           "addressCountry": "US"
         },
-        "founder": {
-          "@type": "Person",
-          "name": "Michael Kyle"
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+1-217-883-0078",
+          "contactType": "customer service",
+          "areaServed": "US"
+        }
+      }
+    </script>
+
+    <!-- LocalBusiness Schema -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "MKM Entertainment LLC",
+        "url": "https://mkmentertainmentllc.com/",
+        "logo": "https://mkmentertainmentllc.com/og-img.jpg",
+        "image": "https://mkmentertainmentllc.com/og-img.jpg",
+        "telephone": "+1-217-883-0078",
+        "priceRange": "$$",
+        "description": "Live sound, lighting, and full production services for local shows, venues, and events. MKM Entertainment provides professional audio engineering, sound rentals, and full show production at Pizza Records in Jacksonville, Illinois.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "59 E Central Park Plaza",
+          "addressLocality": "Jacksonville",
+          "addressRegion": "IL",
+          "postalCode": "62650",
+          "addressCountry": "US"
         },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Central Illinois"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday"
+            ],
+            "opens": "09:00",
+            "closes": "22:00"
+          }
+        ],
         "sameAs": [
           "https://www.facebook.com/mkmentertainmentllc",
           "https://x.com/MichaelKyleOG"
@@ -89,6 +147,7 @@
   </head>
   <body class="bg-black text-white">
     <div id="root"></div>
+    <!-- IMPORTANT: Vite/React entry, not built asset -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
