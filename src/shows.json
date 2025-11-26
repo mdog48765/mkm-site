@@ -1,17 +1,18 @@
 [
   {
-    "id": "2025-11-22-hc",
-    "title": "Cold Nights and Hot Mics",
-    "dateText": "Saturday, Nov. 22nd",
-    "timeText": "7PM–11PM",
-    "price": "$5",
-    "ages": "18+",
+    "id": "2025-12-12-cc",
+    "title": "CRYPTID COMIX PRESENTS: Pizza Records Comedy Night",
+    "dateText": "12/12/25",
+    "timeText": "8:00 PM",
+    "price": "$15 online, $20 at the door",
     "lineup": [
-      "SRT POST, LAMART COX, LUH FOGZ, HOLDYN, ZACTYRR, THE ANGEL OF MARNICO"
+      "Headlining: Ryne Thorson",
+      "Featuring: Al Nimpson, JC Totton, Kody Freeman, Chunky"
     ],
-    "flyer": "/flyers/2025-11-22-hc.jpg",
-    "notes": "Live music, photo booth, and refreshments. Open Mic 7–8PM., Performers 8-11, open mic slots are 5 minutes MAX. Acapella accepted. *MUST BRING HARD DRIVE WITH SONG YOU WANT TO PLAY AHEAD OF TIME*",
-    "sortDate": "2025-11-22T19:00"
+    "flyer": "/flyers/comedy-night.jpg",
+    "ticketUrl": "https://www.cryptidcomix.com/store/tickets?fbclid=IwY2xjawOUWKdleHRuA2FlbQIxMABicmlkETFiQlFGbG1NTzBQdlB5M1dpc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHrHTJIrJt7GgCQvdGc0DQ3-5nLP8xV_MPGoWKcC_BPIT5Zhb01DMDSeQnq2L_aem_ir4atzeEjhiDe8hOVap47g",
+    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2025-12-12"
   },
   {
     "id": "2025-12-20-n8",
@@ -26,6 +27,20 @@
     "flyer": "/flyers/2025-12-20-n8.jpg",
     "notes": "BYOB, MUST BE 21+ TO DRINK",
     "sortDate": "2025-12-20T21:00"
+  },
+  {
+    "id": "2025-11-22-hc",
+    "title": "Cold Nights and Hot Mics",
+    "dateText": "Saturday, Nov. 22nd",
+    "timeText": "7PM–11PM",
+    "price": "$5",
+    "ages": "18+",
+    "lineup": [
+      "SRT POST, LAMART COX, LUH FOGZ, HOLDYN, ZACTYRR, THE ANGEL OF MARNICO"
+    ],
+    "flyer": "/flyers/2025-11-22-hc.jpg",
+    "notes": "Live music, photo booth, and refreshments. Open Mic 7–8PM., Performers 8-11, open mic slots are 5 minutes MAX. Acapella accepted. *MUST BRING HARD DRIVE WITH SONG YOU WANT TO PLAY AHEAD OF TIME*",
+    "sortDate": "2025-11-22T19:00"
   },
   {
     "id": "2025-12-06-pr",

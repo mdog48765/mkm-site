@@ -5,7 +5,9 @@ import "./index.css";
 
 /* ===== Imports for dynamic content ===== */
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
-import SHOWS from "./shows.json";              // you edit this by hand
+import SHOWS from "./shows.json";    
+import BannerAds from "./components/BannerAds";
+          // you edit this by hand
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
@@ -702,6 +704,9 @@ export default function App() {
         {/* Upcoming & Past Shows */}
         <UpcomingShows />
         <PastShows />
+
+        { /* Banner Ads */ }
+        <BannerAds />
 
         {/* About */}
         <AboutSection />
