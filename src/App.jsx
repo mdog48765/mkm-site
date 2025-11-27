@@ -7,7 +7,8 @@ import "./index.css";
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
 import SHOWS from "./shows.json";    
 import BannerAds from "./components/BannerAds";
-          // you edit this by hand
+import Reveal from "./components/Reveal.jsx";
+
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
@@ -669,7 +670,29 @@ export default function App() {
         {/* Hero */}
         <section id="home" className="relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-red-600/20 blur-3xl" />
+<div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+
+  {/* Top-left red glow */}
+  <div
+    className="absolute -top-40 -left-40 h-[26rem] w-[26rem] rounded-full bg-red-500/30 blur-[110px]"
+    style={{ animation: "floatGlow 12s ease-in-out infinite" }}
+  />
+
+  {/* Mid-right pinkish glow */}
+  <div
+    className="absolute top-1/3 right-10 h-[22rem] w-[22rem] rounded-full bg-red-400/20 blur-[100px]"
+    style={{ animation: "floatGlow 16s ease-in-out infinite reverse" }}
+  />
+
+  {/* Bottom-center soft white glow */}
+  <div
+    className="absolute bottom-[-6rem] left-1/2 -translate-x-1/2 h-[28rem] w-[28rem] rounded-full bg-white/10 blur-[120px]"
+    style={{ animation: "floatGlow 20s ease-in-out infinite" }}
+  />
+
+</div>
+
+
             <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
           </div>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
@@ -690,6 +713,7 @@ export default function App() {
         </section>
 
         {/* Gallery */}
+        <Reveal>
         <section id="gallery" className="py-16 border-t border-white/10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
@@ -700,16 +724,24 @@ export default function App() {
             </div>
           </div>
         </section>
-
+        </Reveal>
         {/* Upcoming & Past Shows */}
+        <Reveal>
         <UpcomingShows />
+        </Reveal>
+        <Reveal delay={150}> 
         <PastShows />
+        </Reveal>
 
         { /* Banner Ads */ }
+        <Reveal delay={200}>
         <BannerAds />
+        </Reveal>
 
         {/* About */}
+       <Reveal>
         <AboutSection />
+        </Reveal>
 
         {/* Booking */}
         <section id="book" className="py-16 border-t border-white/10">
