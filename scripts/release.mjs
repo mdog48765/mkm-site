@@ -1,40 +1,74 @@
 // scripts/release.mjs
 import { execSync } from "child_process";
-import { exec } from "child_process";
 
-const run = (cmd, label) => {
-  console.log(`\n▶ ${label}\n$ ${cmd}`);
-  execSync(cmd, { stdio: "inherit" });
-};
-const get = (cmd) => execSync(cmd).toString().trim();
-
-try {
-  // npm run release -- "your message"
-  const msg = process.argv.slice(2).join(" ").trim();
-
-  // 1) Build optimized gallery & (optionally) a local production build
-  run("npm run gallery", "Building/refreshing gallery assets");
-  // You can skip this next line if you don’t want a local prod build:
-  run("npm run build", "Local production build (vite)");
-
-  // 2) Commit & push only if there are changes
-  const status = get("git status --porcelain");
-  if (status) {
-    run("git add -A", "Staging all changes");
-    const stamp = new Date().toISOString().replace("T", " ").slice(0, 16);
-    const commitMsg = msg ? `Release: ${msg}` : `Release: site update (${stamp})`;
-    run(`git commit -m "${commitMsg}"`, "Committing");
-    const branch = get("git rev-parse --abbrev-ref HEAD");
-    run(`git push -u origin ${branch}`, `Pushing to GitHub (${branch})`);
-  } else {
-    console.log("\n(no file changes detected — skipping commit/push)");
-  }
-
-  // 3) Deploy to Vercel production (assumes you already did `vercel login` + `vercel link`)
-  run("vercel --prod", "Deploying to Vercel production");
-
-  console.log("\n✅ Release complete.");
-} catch (err) {
-  console.error("\n❌ Release failed.");
-  process.exit(1);
+function run(cmd, opts = {}) {
+  const defaults = { stdio: "inherit", env: process.env };
+  return execSync(cmd, { ...defaults, ...opts });
 }
+
+function runQuiet(cmd) {
+  return execSync(cmd, { stdio: "pipe" }).toString().trim();
+}
+
+function safe(cmd) {
+  try { run(cmd); } catch (e) { /* swallow */ }
+}
+
+// ---- Flags ----
+const DO_DEPLOY = process.argv.includes("--deploy");
+
+// ---- 1) Pre-build chores ----
+console.log("▶ Building/refreshing gallery assets");
+run("npm run gallery");
+
+console.log("▶ Maintaining shows data");
+run("npm run maintain:shows");
+
+// ---- 2) Build ----
+console.log("▶ Running production build");
+run("vite build");
+
+// ---- 3) Git add/commit/push ----
+console.log("▶ Preparing Git commit");
+
+const branch = (() => {
+  try { return runQuiet("git rev-parse --abbrev-ref HEAD") || "main"; }
+  catch { return "main"; }
+})();
+
+safe("git add -A");
+
+// Anything staged?
+let hasChanges = false;
+try {
+  // exit code 1 when there are staged changes with this command
+  execSync("git diff --cached --quiet");
+  hasChanges = false; // no changes staged
+} catch {
+  hasChanges = true; // changes staged
+}
+
+if (hasChanges) {
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const msg = `release: build + data update (${ts})`;
+  console.log(`▶ Committing: ${msg}`);
+  run(`git commit -m "${msg}"`);
+  console.log(`▶ Pushing to origin/${branch}`);
+  run(`git push -u origin ${branch}`);
+} else {
+  console.log("ℹ No changes to commit (nothing staged). Skipping push.");
+}
+
+// ---- 4) Optional: direct Vercel deploy ----
+if (DO_DEPLOY) {
+  console.log("▶ Deploying with Vercel CLI (--deploy flag detected)");
+  // requires: `vercel login` and `vercel link` done once
+  run("vercel --prod");
+}
+
+console.log("✅ Release complete.");
+console.log(
+  DO_DEPLOY
+    ? "Pushed to GitHub and deployed to Vercel."
+    : "Pushed to GitHub. (Vercel will auto-deploy from Git.)"
+);
