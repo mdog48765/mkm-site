@@ -1287,14 +1287,18 @@ export default function App() {
 
                 <div className="mt-6 flex items-center gap-3">
                   <button
-                    type="submit"
-                    disabled={submitting || !canSubmit}
-                    className={`inline-flex items-center rounded-full px-6 py-3 font-semibold transition ${
-                      submitting || !canSubmit ? "bg-red-800 cursor-not-allowed" : "bg-red-600 hover:bg-red-500"
+                  type="submit"
+                  disabled={submitting || !canSubmit}
+                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap shadow-sm transition
+                    ${
+                      submitting || !canSubmit
+                        ? "bg-red-800 cursor-not-allowed"
+                        : "bg-red-600 hover:bg-red-500"
                     }`}
-                  >
-                    {submitting ? "Sending…" : canSubmit ? "Send Booking Request" : "Please wait…"}
-                  </button>
+                >
+                  {submitting ? "Sending…" : canSubmit ? "Send Request" : "Please wait…"}
+                </button>
+
                   <p className="text-sm text-white/60">
                     Direct email:{" "}
                     <a className="hover:text-red-400" href={`mailto:${CONTACT_EMAIL}`}>
