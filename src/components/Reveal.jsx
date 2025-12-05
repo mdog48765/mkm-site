@@ -23,7 +23,7 @@ export default function Reveal({ children, delay = 0 }) {
           return () => clearTimeout(timer);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
 
     observer.observe(el);
@@ -33,7 +33,7 @@ export default function Reveal({ children, delay = 0 }) {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out will-change-transform ${
+      className={`transition-all duration-500 ease-out will-change-transform ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       }`}
     >

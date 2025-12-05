@@ -5,10 +5,9 @@ import "./index.css";
 
 /* ===== Imports for dynamic content ===== */
 import GALLERY from "./galleryList.json";      // built by scripts/build-gallery.mjs
-import SHOWS from "./shows.json";    
+import SHOWS from "./shows.json";
 import BannerAds from "./components/BannerAds";
 import Reveal from "./components/Reveal.jsx";
-
 
 /* ===== Business info ===== */
 const CONTACT_EMAIL = "michaelkylemusic@icloud.com"; // display-only email
@@ -19,7 +18,7 @@ const PIZZA_RECORDS_PHONE_DISPLAY = "(217) 200-0896";
 const PIZZA_RECORDS_PHONE_TEL = "+12172000896";
 const VENUE_ADDRESS = "59 E Central Park Plaza, Jacksonville, IL 62650";
 const LOGO_SRC = "/thumbnail_MKM%20Entertainment%20logo.png"; // file is in /public
-
+const PIZZA_RECORDS_WEBSITE = "https://www.pizzarecordsjville.com/";
 /* ===== Schema helpers (Next Event from shows.json) ===== */
 
 // Pick the next upcoming show based on sortDate
@@ -189,7 +188,7 @@ function AboutSection() {
 }
 
 /* ===== Safe image for Gallery ===== */
-function SafeImg({ jpg, webp, alt }) {
+function SafeImg({ jpg, webp, alt, className = "" }) {
   const [broken, setBroken] = useState(false);
   return (
     <picture>
@@ -200,7 +199,7 @@ function SafeImg({ jpg, webp, alt }) {
         loading="lazy"
         decoding="async"
         onError={() => setBroken(true)}
-        className="aspect-video object-cover rounded-xl border border-white/10"
+        className={`aspect-video object-cover rounded-xl border border-white/10 ${className}`}
       />
     </picture>
   );
@@ -231,7 +230,7 @@ function UpcomingShows() {
   }
 
   return (
-    <section id="shows" className="py-16 border-t border-white/10">
+    <section id="shows" className="py-16 border-white/10 border-t">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl font-bold">Upcoming Shows</h2>
         <p className="mt-2 text-sm text-white/60">Click photo to view full flyer</p>
@@ -374,6 +373,110 @@ function PastShows() {
   );
 }
 
+/* ===== Gallery Section (mobile carousel + desktop grid) ===== */
+function GallerySection() {
+  const [index, setIndex] = useState(0);
+  const total = Array.isArray(GALLERY) ? GALLERY.length : 0;
+
+  if (!total) {
+    return (
+      <section id="gallery" className="py-16 border-t border-white/10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
+          <p className="mt-4 text-white/60 text-sm">Photos coming soon.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const current = GALLERY[index];
+
+  const goTo = (next) => {
+    if (!total) return;
+    const wrapped = ((next % total) + total) % total;
+    setIndex(wrapped);
+  };
+
+  return (
+    <section id="gallery" className="py-16 border-t border-white/10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
+
+        {/* Mobile: simple carousel */}
+        <div className="mt-6 sm:hidden">
+          <div className="relative">
+            <SafeImg
+              jpg={current.jpg}
+              webp={current.webp}
+              alt={`Event photo ${index + 1} of ${total}`}
+            />
+
+             <button
+            type="button"
+            onClick={() => goTo(index - 1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2
+                       flex h-9 w-9 items-center justify-center
+                       rounded-full border border-white/15
+                       bg-black/50 text-lg text-white/80
+                       shadow-lg shadow-black/40
+                       transition
+                       hover:bg-black/80 hover:text-white
+                       active:scale-95"
+            aria-label="Previous photo"
+          >
+            ‹
+            </button>
+              
+             <button
+                type="button"
+                onClick={() => goTo(index + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2
+                           flex h-9 w-9 items-center justify-center
+                           rounded-full border border-white/15
+                           bg-black/50 text-lg text-white/80
+                           shadow-lg shadow-black/40
+                           transition
+                           hover:bg-black/80 hover:text-white
+                           active:scale-95"
+                aria-label="Next photo"
+              >
+                ›
+              </button>
+
+
+            {/* Dots */}
+            <div className="mt-3 flex items-center justify-center gap-2">
+              {GALLERY.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={`h-2.5 rounded-full transition-all ${
+                    i === index ? "w-5 bg-red-500" : "w-2 bg-white/30"
+                  }`}
+                  aria-label={`Go to photo ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Tablet / Desktop: grid */}
+        <div className="mt-8 hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+          {GALLERY.map((g, i) => (
+            <SafeImg
+              key={g.jpg}
+              jpg={g.jpg}
+              webp={g.webp}
+              alt={`Event photo ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ===== Validation ===== */
 function validateForm(form, bookingType, selectedService, addOns) {
   const errs = {};
@@ -420,6 +523,9 @@ function validateForm(form, bookingType, selectedService, addOns) {
 /* ===== Main App ===== */
 export default function App() {
   const [logoBroken, setLogoBroken] = useState(false);
+
+  // Mobile nav
+  const [navOpen, setNavOpen] = useState(false);
 
   // Booking/cart state
   const [bookingType, setBookingType] = useState("Pizza Records"); // "Pizza Records" | "External"
@@ -630,15 +736,15 @@ export default function App() {
 
       <div className="min-h-screen bg-black text-white selection:bg-red-600/40">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-white/10">
-          <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            {/* Logo: single anchor, egg + home logic here */}
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            {/* Logo */}
             <EggHintWrapper rippleRadius={24} demoOnMount={true}>
               <a
                 href="/"
                 onClick={onLogoClick}
                 onDoubleClick={onLogoDoubleClick}
-                className="flex items-center gap-3 block [line-height:0]"
+                className="flex items-center gap-3 [line-height:0]"
                 aria-label="MKM Home"
               >
                 {logoBroken ? (
@@ -655,56 +761,125 @@ export default function App() {
               </a>
             </EggHintWrapper>
 
-            <nav className="flex items-center gap-5 text-sm">
-              <a href="#gallery" className="hover:text-red-400">Gallery</a>
-              <a href="#shows" className="hover:text-red-400">Shows</a>
-              <a href="#about" className="hover:text-red-400">About</a>
-              <a href="#book" className="hover:text-red-400">Book</a>
-              <a href="#contact" className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium hover:bg-red-500 transition">
+            {/* Desktop nav */}
+            <nav className="hidden items-center gap-5 text-sm md:flex">
+              <a href="#gallery" className="hover:text-red-400">
+                Gallery
+              </a>
+              <a href="#shows" className="hover:text-red-400">
+                Shows
+              </a>
+              <a href="#about" className="hover:text-red-400">
+                About
+              </a>
+              <a href="#book" className="hover:text-red-400">
+                Book
+              </a>
+              <a
+                href="#contact"
+                className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 font-medium transition hover:bg-red-500"
+              >
                 Contact
               </a>
             </nav>
+
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              onClick={() => setNavOpen((v) => !v)}
+              className="inline-flex items-center justify-center rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/5 md:hidden"
+              aria-label="Toggle navigation"
+            >
+              <span className="sr-only">Open main menu</span>
+              <div className="flex flex-col gap-[3px]">
+                <span className="h-[2px] w-4 rounded-full bg-white" />
+                <span className="h-[2px] w-4 rounded-full bg-white" />
+                <span className="h-[2px] w-4 rounded-full bg-white" />
+              </div>
+            </button>
           </div>
+
+          {/* Mobile nav panel */}
+          {navOpen && (
+            <div className="border-t border-white/10 bg-black/95 md:hidden">
+              <nav className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 text-sm">
+                <a
+                  href="#gallery"
+                  onClick={() => setNavOpen(false)}
+                  className="rounded-md px-2 py-2 hover:bg-white/5"
+                >
+                  Gallery
+                </a>
+                <a
+                  href="#shows"
+                  onClick={() => setNavOpen(false)}
+                  className="rounded-md px-2 py-2 hover:bg-white/5"
+                >
+                  Shows
+                </a>
+                <a
+                  href="#about"
+                  onClick={() => setNavOpen(false)}
+                  className="rounded-md px-2 py-2 hover:bg-white/5"
+                >
+                  About
+                </a>
+                <a
+                  href="#book"
+                  onClick={() => setNavOpen(false)}
+                  className="rounded-md px-2 py-2 hover:bg-white/5"
+                >
+                  Book
+                </a>
+                <a
+                  href="#contact"
+                  onClick={() => setNavOpen(false)}
+                  className="mt-1 inline-flex items-center justify-center rounded-full bg-red-600 px-4 py-2 font-medium transition hover:bg-red-500"
+                >
+                  Contact
+                </a>
+              </nav>
+            </div>
+          )}
         </header>
 
         {/* Hero */}
         <section id="home" className="relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-<div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-
-  {/* Top-left red glow */}
-  <div
-    className="absolute -top-40 -left-40 h-[26rem] w-[26rem] rounded-full bg-red-500/30 blur-[110px]"
-    style={{ animation: "floatGlow 12s ease-in-out infinite" }}
-  />
-
-  {/* Mid-right pinkish glow */}
-  <div
-    className="absolute top-1/3 right-10 h-[22rem] w-[22rem] rounded-full bg-red-400/20 blur-[100px]"
-    style={{ animation: "floatGlow 16s ease-in-out infinite reverse" }}
-  />
-
-  {/* Bottom-center soft white glow */}
-  <div
-    className="absolute bottom-[-6rem] left-1/2 -translate-x-1/2 h-[28rem] w-[28rem] rounded-full bg-white/10 blur-[120px]"
-    style={{ animation: "floatGlow 20s ease-in-out infinite" }}
-  />
-
-</div>
-
-
-            <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          {/* Floating glows */}
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            {/* Top-left red glow */}
+            <div
+              className="absolute -top-40 -left-40 h-[22rem] w-[22rem] rounded-full bg-red-500/25 blur-[100px] md:h-[26rem] md:w-[26rem]"
+              style={{ animation: "floatGlow 12s ease-in-out infinite" }}
+            />
+            {/* Mid-right pinkish glow */}
+            <div
+              className="absolute top-1/3 right-10 h-[18rem] w-[18rem] rounded-full bg-red-400/18 blur-[90px] md:h-[22rem] md:w-[22rem]"
+              style={{ animation: "floatGlow 16s ease-in-out infinite reverse" }}
+            />
+            {/* Bottom-center soft white glow */}
+            <div
+              className="absolute bottom-[-5rem] left-1/2 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-white/10 blur-[110px] md:h-[28rem] md:w-[28rem]"
+              style={{ animation: "floatGlow 20s ease-in-out infinite" }}
+            />
           </div>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-            <p className="text-sm text-white/60">Jacksonville, Illinois • Weekends at Pizza Records</p>
-            <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">Get Off The Couch!!</h1>
-            <p className="mt-4 max-w-2xl text-white/80">
-              Full-service shows at Pizza Records and professional sound equipment rentals. Modern, sleek production by design.
+
+          <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pb-24 lg:pt-32">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/60 sm:text-sm">
+              Jacksonville, Illinois • Weekends at Pizza Records
             </p>
-            <div className="mt-8">
+            <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+              Get Off The Couch!!
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
+              Full-service shows at Pizza Records and professional sound equipment rentals.
+              Modern, sleek production by design.
+            </p>
+
+            <div className="mt-8 max-w-sm">
               <a
                 href="#book"
-                className="inline-flex items-center rounded-full bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition"
+                className="inline-flex w-full items-center justify-center rounded-full bg-red-600 px-6 py-3 text-base font-semibold transition hover:bg-red-500 sm:w-auto sm:px-8 sm:py-4"
               >
                 Book Now
               </a>
@@ -712,35 +887,27 @@ export default function App() {
           </div>
         </section>
 
-        {/* Gallery */}
-        <Reveal>
-        <section id="gallery" className="py-16 border-t border-white/10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl sm:text-4xl font-bold">Gallery</h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {GALLERY.map((g, i) => (
-                <SafeImg key={g.jpg} jpg={g.jpg} webp={g.webp} alt={`Event photo ${i + 1}`} />
-              ))}
-            </div>
-          </div>
-        </section>
-        </Reveal>
         {/* Upcoming & Past Shows */}
         <Reveal>
-        <UpcomingShows />
+          <UpcomingShows />
         </Reveal>
-        <Reveal delay={150}> 
-        <PastShows />
+        <Reveal delay={150}>
+          <PastShows />
         </Reveal>
 
-        { /* Banner Ads */ }
+        {/* Gallery */}
+        <Reveal>
+          <GallerySection />
+        </Reveal>
+
+        {/* Banner Ads */}
         <Reveal delay={200}>
-        <BannerAds />
+          <BannerAds />
         </Reveal>
 
         {/* About */}
-       <Reveal>
-        <AboutSection />
+        <Reveal>
+          <AboutSection />
         </Reveal>
 
         {/* Booking */}
@@ -1031,7 +1198,7 @@ export default function App() {
                       name="name"
                       type="text"
                       required
-                      className={`mt-1 w-full rounded-lg bg.black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
+                      className={`mt-1 w-full rounded-lg bg-black/40 border px-3 py-2 outline-none focus:ring-2 focus:ring-red-600 ${
                         errors.name ? "border-red-500" : "border-white/10"
                       }`}
                     />
@@ -1162,6 +1329,7 @@ export default function App() {
                     label="Phone"
                     value={<a className="hover:text-red-400" href={`tel:${PIZZA_RECORDS_PHONE_TEL}`}>{PIZZA_RECORDS_PHONE_DISPLAY}</a>}
                   />
+                  <InfoRow label="website" value={<a className="hover:text-red-400" href={PIZZA_RECORDS_WEBSITE} target="_blank" rel="noreferrer">{PIZZA_RECORDS_WEBSITE}</a>} />
                   <InfoRow
                     label="Email"
                     value={<a className="hover:text-red-400" href={`mailto:${PIZZA_RECORDS_EMAIL}`}>{PIZZA_RECORDS_EMAIL}</a>}
