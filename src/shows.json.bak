@@ -26,7 +26,8 @@
     ],
     "flyer": "/flyers/2025-12-20-n8.jpg",
     "ticketUrl": "https://theticketing.co/e/nil8pr",
-    "notes": "Tickets are Limited. Presale is SOLD OUT"
+    "notes": "Tickets are Limited. Presale is SOLD OUT",
+    "sortDate": "2025-12-20T21:00"
   },
   {
     "id": "2025-11-22-hc",
@@ -55,5 +56,18 @@
     "flyer": "/flyers/2025-11-08-pr.jpg",
     "notes": "BYOB, MUST BE 21+ TO DRINK",
     "sortDate": "2025-11-08T19:00"
+  },
+  {
+    "id": "2026-01-17-PR",
+    "title": "Scarlet's Darling @ Pizza Records",
+    "dateText": "01/17/26",
+    "timeText": "8:00 PM",
+    "price": "$10",
+    "lineup": [
+      "Scarlet's Darling, Short Notice, The Complaint Line"
+    ],
+    "flyer": "/flyers/scarlets-darling.jpg",
+    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-01-17"
   }
 ]
