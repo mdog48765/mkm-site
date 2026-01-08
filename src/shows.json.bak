@@ -70,5 +70,21 @@
     "flyer": "/flyers/2025-11-08-pr.jpg",
     "notes": "BYOB, MUST BE 21+ TO DRINK",
     "sortDate": "2025-11-08T19:00"
-  }
+  },
+{
+    "id": "2026-02-06-pr",
+    "title": "LIVE COMEDY NIGHT at Pizza Records",
+    "dateText": "Friday, Feb. 6th",
+    "timeText": "Doors at 7:30 PM, Show at 8:00 PM",
+    "price": "$20",
+    "ages": "All Ages",
+    "lineup": [
+      "Host: Reed Davis, Headliner: Richard Bailey, Support: Joshua Pierce., Joe The Animal, Bradley Scoggins"
+    ],
+    "ticketUrl":"https://www.cryptidcomix.com/store/tickets",
+    "flyer": "/flyers/comedy_pr.jpg",
+    "notes": "21+ show, ID required. The Colony is a bar and does not serve food.",
+    "sortDate": "2026-02-06T20:00"
+}
+
 ]

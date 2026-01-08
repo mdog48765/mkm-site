@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-01-17-PR",
+    "title": "Scarlet's Darling @ Pizza Records",
+    "dateText": "01/17/26",
+    "timeText": "7:00PM - 10:30PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "Scarlet's Darling, Short Notice, The Complaint Line"
+    ],
+    "flyer": "/flyers/scarlets-darling.jpg",
+    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-01-17"
+  },
+  {
+    "id": "2026-02-06-pr",
+    "title": "LIVE COMEDY NIGHT at Pizza Records",
+    "dateText": "Friday, Feb. 6th",
+    "timeText": "Doors at 7:30 PM, Show at 8:00 PM",
+    "price": "$20",
+    "ages": "All Ages",
+    "lineup": [
+      "Host: Reed Davis, Headliner: Richard Bailey, Support: Joshua Pierce., Joe The Animal, Bradley Scoggins"
+    ],
+    "ticketUrl": "https://www.cryptidcomix.com/store/tickets",
+    "flyer": "/flyers/comedy_pr.jpg",
+    "notes": "21+ show, ID required. The Colony is a bar and does not serve food.",
+    "sortDate": "2026-02-06T20:00"
+  },
+  {
     "id": "2025-12-20-n8",
     "title": "NIL8 at Pizza Records",
     "dateText": "Saturday, Dec. 20th",
@@ -13,20 +42,6 @@
     "ticketUrl": "https://theticketing.co/e/nil8pr",
     "notes": "Tickets are Limited. Presale is SOLD OUT",
     "sortDate": "2025-12-20T21:00"
-  },
-  {
-    "id": "2026-01-17-PR",
-    "title": "Scarlet's Darling @ Pizza Records",
-    "dateText": "01/17/26",
-    "timeText": "7:00PM - 10:30PM",
-    "price": "$10",
-    "ages": "All Ages",
-    "lineup": [
-      "Scarlet's Darling, Short Notice, The Complaint Line"
-    ],
-    "flyer": "/flyers/scarlets-darling.jpg",
-    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
-    "sortDate": "2026-01-17"
   },
   {
     "id": "2025-12-12-cc",
