@@ -843,49 +843,68 @@ export default function App() {
           )}
         </header>
 
-        {/* Hero */}
-        <section id="home" className="relative overflow-hidden">
-          {/* Floating glows */}
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            {/* Top-left red glow */}
-            <div
-              className="absolute -top-40 -left-40 h-[22rem] w-[22rem] rounded-full bg-red-500/25 blur-[100px] md:h-[26rem] md:w-[26rem]"
-              style={{ animation: "floatGlow 12s ease-in-out infinite" }}
-            />
-            {/* Mid-right pinkish glow */}
-            <div
-              className="absolute top-1/3 right-10 h-[18rem] w-[18rem] rounded-full bg-red-400/18 blur-[90px] md:h-[22rem] md:w-[22rem]"
-              style={{ animation: "floatGlow 16s ease-in-out infinite reverse" }}
-            />
-            {/* Bottom-center soft white glow */}
-            <div
-              className="absolute bottom-[-5rem] left-1/2 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-white/10 blur-[110px] md:h-[28rem] md:w-[28rem]"
-              style={{ animation: "floatGlow 20s ease-in-out infinite" }}
-            />
-          </div>
+      {/* Hero */}
+<section id="home" className="relative overflow-hidden">
+  {/* Background Video */}
+  <video
+    src="/mkm-loop.mp4"
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="auto"
+    className="absolute inset-0 h-full w-full object-cover"
+  />
 
-          <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pb-24 lg:pt-32">
-            <p className="text-xs font-medium uppercase tracking-wide text-white/60 sm:text-sm">
-              Jacksonville, Illinois • Weekends at Pizza Records
-            </p>
-            <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-              Get Off The Couch!!
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
-              Full-service shows at Pizza Records and professional sound equipment rentals.
-              Modern, sleek production by design.
-            </p>
+  {/* Dark overlay for contrast */}
+  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
 
-            <div className="mt-8 max-w-sm">
-              <a
-                href="#book"
-                className="inline-flex w-full items-center justify-center rounded-full bg-red-600 px-6 py-3 text-base font-semibold transition hover:bg-red-500 sm:w-auto sm:px-8 sm:py-4"
-              >
-                Book Now
-              </a>
-            </div>
-          </div>
-        </section>
+  {/* Floating glows */}
+  <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden="true">
+    {/* Top-left red glow */}
+    <div
+      className="absolute -top-40 -left-40 h-[22rem] w-[22rem] rounded-full bg-red-500/25 blur-[100px] md:h-[26rem] md:w-[26rem]"
+      style={{ animation: "floatGlow 12s ease-in-out infinite" }}
+    />
+
+    {/* Mid-right pinkish glow */}
+    <div
+      className="absolute top-1/3 right-10 h-[18rem] w-[18rem] rounded-full bg-red-400/18 blur-[90px] md:h-[22rem] md:w-[22rem]"
+      style={{ animation: "floatGlow 16s ease-in-out infinite reverse" }}
+    />
+
+    {/* Bottom-center soft white glow */}
+    <div
+      className="absolute bottom-[-5rem] left-1/2 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-white/10 blur-[110px] md:h-[28rem] md:w-[28rem]"
+      style={{ animation: "floatGlow 20s ease-in-out infinite" }}
+    />
+  </div>
+
+  {/* Foreground content */}
+  <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pb-24 lg:pt-32">
+    <p className="text-xs font-medium uppercase tracking-wide text-white/60 sm:text-sm">
+      Jacksonville, Illinois • Weekends at Pizza Records
+    </p>
+
+    <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+      Get Off The Couch!!
+    </h1>
+
+    <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
+      Full-service shows at Pizza Records and professional sound equipment rentals.
+      Modern, sleek production by design.
+    </p>
+
+    <div className="mt-8 max-w-sm">
+      <a
+        href="#book"
+        className="inline-flex w-full items-center justify-center rounded-full bg-red-600 px-6 py-3 text-base font-semibold transition hover:bg-red-500 sm:w-auto sm:px-8 sm:py-4"
+      >
+        Book Now
+      </a>
+    </div>
+  </div>
+</section>
 
         {/* Upcoming & Past Shows */}
         <Reveal>
