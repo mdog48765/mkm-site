@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-03-21-sb",
+    "title": "Heavenly Productions Presents: SPRING BASH",
+    "dateText": "Saturday, March 21st",
+    "timeText": "6:30PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "Luh Fogz, Lamart, Artificial Light, ImGonzoBruh, KaySea, ACCESS GRANTED, NORTH S.T.A.R.R."
+    ],
+    "flyer": "/flyers/spring-bash.png",
+    "sortDate": "2026-03-21T23:00"
+  },
+  {
     "id": "2026-02-06-pr",
     "title": "LIVE COMEDY NIGHT at Pizza Records",
     "dateText": "Friday, Feb. 6th",
