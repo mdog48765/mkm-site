@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-03-21-sb",
+    "title": "Heavenly Productions Presents: SPRING BASH",
+    "dateText": "Saturday, March 21st",
+    "timeText": "6:30PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "Luh Fogz, Lamart, Artificial Light, ImGonzoBruh, KaySea, ACCESS GRANTED, NORTH S.T.A.R.R."
+    ],
+    "flyer": "/flyers/spring-bash.png",
+    "sortDate": "2026-03-21T23:00"
+  },
+  {
     "id": "2026-02-06-pr",
     "title": "LIVE COMEDY NIGHT at Pizza Records",
     "dateText": "Friday, Feb. 6th",
@@ -87,14 +100,17 @@
     "sortDate": "2025-11-08T19:00"
   },
   {
-    "id": "2026-03-21-sb",
-    "title": "Heavenly Productions Presents: SPRING BASH",
-    "dateText": "Saturday, March 21st",
-    "timeText": "6:30PM",
+    "id": "04-11-2026-pr",
+    "title": "Traveling Tribute To Vans Warped Tour",
+    "dateText": "Saturday, Apr. 11th",
+    "timeText": "7PM–11PM, DOORS AT 6:30PM",
     "price": "$10",
     "ages": "All Ages",
-    "lineup": ["Luh Fogz, Lamart, Artificial Light, ImGonzoBruh, KaySea, ACCESS GRANTED, NORTH S.T.A.R.R."],
-    "flyer": "/flyers/spring-bash.png",
-    "sortDate": "2026-03-21T23:00"
+    "lineup": [
+      "The Warped Kids, Unchained, Granny Square"
+    ],
+    "flyer": "/flyers/warped-kids.jpg",
+    "notes": "IYKYK. BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-04-11T23:00"
   }
 ]
