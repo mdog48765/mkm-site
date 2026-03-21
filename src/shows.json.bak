@@ -13,6 +13,20 @@
     "sortDate": "2026-03-21T23:00"
   },
   {
+    "id": "04-11-2026-pr",
+    "title": "Traveling Tribute To Vans Warped Tour",
+    "dateText": "Saturday, Apr. 11th",
+    "timeText": "7PM–11PM, DOORS AT 6:30PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "The Warped Kids, Unchained, Granny Square"
+    ],
+    "flyer": "/flyers/warped-kids.jpg",
+    "notes": "IYKYK. BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-04-11T23:00"
+  },
+  {
     "id": "2026-02-06-pr",
     "title": "LIVE COMEDY NIGHT at Pizza Records",
     "dateText": "Friday, Feb. 6th",
@@ -100,17 +114,18 @@
     "sortDate": "2025-11-08T19:00"
   },
   {
-    "id": "04-11-2026-pr",
-    "title": "Traveling Tribute To Vans Warped Tour",
-    "dateText": "Saturday, Apr. 11th",
-    "timeText": "7PM–11PM, DOORS AT 6:30PM",
-    "price": "$10",
-    "ages": "All Ages",
+    "id": "2026-04-03-pr",
+    "title": "CRYPTID COMIX PRESENTS: Pizza Records Comedy Night",
+    "dateText": "Saturday, Apr. 3rd",
+    "timeText": "8:00 PM",
+    "price": "$20, couples for $35",
+    "ages": "All Ages; use your best judgment",
     "lineup": [
-      "The Warped Kids, Unchained, Granny Square"
+      "Hosted by Chunky, featuring: Andy Leamon, Colton Lane, Zack Weston, Mike Adrales with special guests: Donte Banks and Marissa Blankenship"
     ],
-    "flyer": "/flyers/warped-kids.jpg",
-    "notes": "IYKYK. BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
-    "sortDate": "2026-04-11T23:00"
-  }
+    "ticketUrl": "https://www.cryptidcomix.com/store/tickets",
+    "flyer": "/flyers/comedy-pr-2.jpg",
+    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-04-03T20:00"
+  } 
 ]
