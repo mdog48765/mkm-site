@@ -13,6 +13,21 @@
     "sortDate": "2026-03-21T23:00"
   },
   {
+    "id": "2026-04-03-pr",
+    "title": "CRYPTID COMIX PRESENTS: Pizza Records Comedy Night",
+    "dateText": "Saturday, Apr. 3rd",
+    "timeText": "8:00 PM",
+    "price": "$20, couples for $35",
+    "ages": "All Ages; use your best judgment",
+    "lineup": [
+      "Hosted by Chunky, featuring: Andy Leamon, Colton Lane, Zack Weston, Mike Adrales with special guests: Donte Banks and Marissa Blankenship"
+    ],
+    "ticketUrl": "https://www.cryptidcomix.com/store/tickets",
+    "flyer": "/flyers/comedy-pr-2.jpg",
+    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
+    "sortDate": "2026-04-03T20:00"
+  },
+  {
     "id": "04-11-2026-pr",
     "title": "Traveling Tribute To Vans Warped Tour",
     "dateText": "Saturday, Apr. 11th",
@@ -114,18 +129,17 @@
     "sortDate": "2025-11-08T19:00"
   },
   {
-    "id": "2026-04-03-pr",
-    "title": "CRYPTID COMIX PRESENTS: Pizza Records Comedy Night",
-    "dateText": "Saturday, Apr. 3rd",
-    "timeText": "8:00 PM",
-    "price": "$20, couples for $35",
-    "ages": "All Ages; use your best judgment",
+    "id": "2026-04-25-pr",
+    "title": "BIG4NIKK PRESENTS: APRIL 25TH TAKEOVER",
+    "dateText": "Saturday, Apr. 25th",
+    "timeText": " doors at 6:30PM show is 7:30PM–11PM",
+    "price": " $10 limited presale (contact BIG4NIKK via 'buy tickets' button), $15 GA ",
+    "ages": "All Ages",
     "lineup": [
-      "Hosted by Chunky, featuring: Andy Leamon, Colton Lane, Zack Weston, Mike Adrales with special guests: Donte Banks and Marissa Blankenship"
-    ],
-    "ticketUrl": "https://www.cryptidcomix.com/store/tickets",
-    "flyer": "/flyers/comedy-pr-2.jpg",
-    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
-    "sortDate": "2026-04-03T20:00"
-  } 
+      "BIG4NIKK, Cee.cld, Blumoon, JB, Cityfme,Jaydo, Wockart, more TBA."
+  ],
+    "flyer": "/flyers/hiphop-pr.jpg",
+  "ticketUrl": "https://hyperfollow.com/big4nikk",
+  "sortDate": "2026-04-25T19:30"
+  }
 ]
