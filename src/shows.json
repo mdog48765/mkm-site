@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026-07-11-pr",
+    "title": "LIVE COMEDY NIGHT at Pizza Records",
+    "dateText": "Saturday, Jul. 11th",
+    "timeText": "Doors at 6:30 PM, Show at 7:00 PM",
+    "price": "$5",
+    "ages": "All Ages",
+    "lineup": [
+      "The Down Bads, Silver Material, Short Notice"
+    ],
+    "flyer": "/flyers/midwemo-night.jpg",
+    "sortDate": "2026-07-11T20:00"
+  },
+  {
+    "id": "2026-07-18-pr",
+    "title": "Summer Daze",
+    "dateText": "Saturday, Jul. 18th",
+    "timeText": "Doors at 6:30 PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "Luh Fogz, Zac Tyrr, Prince Cash, Lamart, Cee.cld, FireWater, Access Granted, Blumoon, NORTH S.T.A.R.R."
+    ],
+    "flyer": "/flyers/summer-daze.jpg",
+    "sortDate": "2026-07-18T20:00"
+  },
+  {
+    "id": "2026-07-31-pr",
+    "title": "LIVE COMEDY NIGHT at Pizza Records",
+    "dateText": "Friday, Jul. 31st",
+    "timeText": "7:00 PM",
+    "price": "$10",
+    "ages": "All Ages",
+    "lineup": [
+      "Short Notice, Couch Potato Massacre, Scarlet Fever"
+    ],
+    "flyer": "/flyers/short-notice-31.jpg",
+    "sortDate": "2026-07-31T20:00"
+  },
+  {
     "id": "2026-04-25-pr",
     "title": "BIG4NIKK PRESENTS: APRIL 25TH TAKEOVER",
     "dateText": "Saturday, Apr. 25th",
