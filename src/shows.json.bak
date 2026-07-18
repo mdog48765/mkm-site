@@ -126,15 +126,14 @@
   {
     "id": "2026-01-10-pr",
     "title": "John:14 Pizza Records",
-    "dateText": "01/10/26",
+    "dateText": "07/25/26",
     "timeText": "7:00PM - 10:30PM",
-    "price": "$10",
+    "price": "FREE",
     "ages": "All Ages",
     "lineup": [
-      "The Complaint Line, Short Notice, Scarlet's Darling"
+      "John:14"
     ],
-    "flyer": "/flyers/the-complaint-line.jpg",
-    "notes": "BYOB, MUST BE 21+ TO DRINK - $5 cooler rentals available at KJB's. Make sure  to grab some grub before-hand. Pizza Records does not serve food or drink.",
-    "sortDate": "2026-01-10"
+    "flyer": "/flyers/john-14.jpg",
+    "sortDate": "2026-07-25"
   }
 ]

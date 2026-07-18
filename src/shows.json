@@ -13,6 +13,19 @@
     "sortDate": "2026-07-18T20:00"
   },
   {
+    "id": "2026-01-10-pr",
+    "title": "John:14 Pizza Records",
+    "dateText": "07/25/26",
+    "timeText": "7:00PM - 10:30PM",
+    "price": "FREE",
+    "ages": "All Ages",
+    "lineup": [
+      "John:14"
+    ],
+    "flyer": "/flyers/john-14.jpg",
+    "sortDate": "2026-07-25"
+  },
+  {
     "id": "2026-07-31-pr",
     "title": "Short Notice at Pizza Records",
     "dateText": "Friday, Jul. 31st",
